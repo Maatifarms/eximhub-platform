@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS users (
     google_id VARCHAR(255),
     country VARCHAR(100),
     company_name VARCHAR(255),
-    subscription_tier ENUM('trial', 'Program 1', 'Program 2', 'Enterprise') DEFAULT 'trial',
+    subscription_tier ENUM('trial', 'Program 1', 'Program 2', 'Enterprise', 'Admin') DEFAULT 'trial',
     points_balance INT DEFAULT 100,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -34,6 +34,10 @@ CREATE TABLE IF NOT EXISTS companies (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE INDEX idx_company_industry ON companies(industry);
+CREATE INDEX idx_company_country ON companies(country);
+CREATE INDEX idx_company_name ON companies(company_name);
+
 -- 3. Contacts Table
 CREATE TABLE IF NOT EXISTS contacts (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -45,14 +49,19 @@ CREATE TABLE IF NOT EXISTS contacts (
     department VARCHAR(100),
     linkedin VARCHAR(255),
     email VARCHAR(255),
-    phone VARCHAR(50),
-    mobile VARCHAR(50),
+    phone TEXT,
+    mobile TEXT,
     industry VARCHAR(100),
     country VARCHAR(100),
     is_procurement TINYINT(1) DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
 );
+
+CREATE INDEX idx_contact_company_id ON contacts(company_id);
+CREATE INDEX idx_contact_is_procurement ON contacts(is_procurement);
+CREATE INDEX idx_contact_industry ON contacts(industry);
+CREATE INDEX idx_contact_country ON contacts(country);
 
 -- 4. Reveals Table
 CREATE TABLE IF NOT EXISTS reveals (
@@ -109,6 +118,17 @@ CREATE TABLE IF NOT EXISTS search_trends (
     keyword VARCHAR(100) PRIMARY KEY,
     count INT DEFAULT 1,
     last_searched TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- 10. Security Logs
+CREATE TABLE IF NOT EXISTS security_logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    action VARCHAR(100),
+    details TEXT,
+    severity ENUM('low', 'medium', 'high') DEFAULT 'low',
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
 -- ROLE DETECTION TRIGGER
