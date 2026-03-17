@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { discoveryApi, creditsApi, marketplaceApi, authApi } from './api';
+import { discoveryApi, creditsApi, marketplaceApi, authApi, marketIntelligenceApi } from './api';
 import { Link } from 'react-router-dom';
-import { LayoutDashboard, Globe, Search, Book, CreditCard, TrendingUp, Cpu, User, LogOut, BarChart as BarChartIcon, MapPin, Briefcase, Unlock, Send, Bot, CheckCircle, ExternalLink, Shield, Mail, Phone, Building2 } from 'lucide-react';
+import { LayoutDashboard, Globe, Search, Book, BookOpen, CreditCard, TrendingUp, Cpu, User, LogOut, BarChart as BarChartIcon, MapPin, Briefcase, Unlock, Send, Bot, CheckCircle, ExternalLink, Shield, Mail, Phone, Building2, Database } from 'lucide-react';
 import CompanyDirectory from './CompanyDirectory';
 
 export default function UserDashboard({ user }) {
@@ -43,6 +43,7 @@ export default function UserDashboard({ user }) {
         <nav className="sidebar-nav">
           <NavItem active={activeView === 'Dashboard'} icon={<LayoutDashboard size={20}/>} label="Dashboard" onClick={() => setActiveView('Dashboard')} />
           <NavItem active={activeView === 'Search'} icon={<Search size={20}/>} label="Procurement Discovery" onClick={() => setActiveView('Search')} />
+          <NavItem active={activeView === 'Market Intelligence'} icon={<Database size={20}/>} label="Market Intelligence" onClick={() => setActiveView('Market Intelligence')} />
           <NavItem active={activeView === 'AI'} icon={<Cpu size={20}/>} label="EximHub AI" onClick={() => setActiveView('AI')} />
           <NavItem active={activeView === 'Library'} icon={<Book size={20}/>} label="My Library" onClick={() => setActiveView('Library')} />
           <NavItem active={activeView === 'Directory'} icon={<Building2 size={20}/>} label="Trade Directory" onClick={() => setActiveView('Directory')} />
@@ -88,6 +89,7 @@ export default function UserDashboard({ user }) {
             </section>
             {activeView === 'Dashboard' && <DashboardHome userData={userData} setActiveView={setActiveView} />}
             {activeView === 'Search' && <GlobalSearchView userData={userData} user={user} refreshUserData={refreshUserData} />}
+            {activeView === 'Market Intelligence' && <MarketIntelligenceView />}
             {activeView === 'AI' && <AIView userData={userData} />}
             {activeView === 'Library' && <LibraryView userData={userData} user={user} />}
             {activeView === 'Directory' && <CompanyDirectory />}
@@ -97,6 +99,170 @@ export default function UserDashboard({ user }) {
       </main>
     </div>
   );
+}
+
+function MarketIntelligenceView() {
+    const [overview, setOverview] = useState(null);
+    const [rows, setRows] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [filters, setFilters] = useState({
+        keyword: '',
+        hsCode: '',
+        country: '',
+        shipperName: '',
+        consigneeName: '',
+        marketSegment: '',
+        port: '',
+        shipmentMode: '',
+        limit: 25,
+    });
+
+    useEffect(() => {
+        marketIntelligenceApi.getOverview()
+            .then(res => {
+                if (res.data.success) setOverview(res.data.data);
+            })
+            .catch(err => console.error('Market overview failed', err));
+    }, []);
+
+    const updateFilter = (key, value) => {
+        setFilters(prev => ({ ...prev, [key]: value }));
+    };
+
+    const runSearch = async () => {
+        setLoading(true);
+        try {
+            const res = await marketIntelligenceApi.search(filters);
+            setRows(res.data.data || []);
+        } catch (e) {
+            alert('Market intelligence search failed: ' + (e.response?.data?.message || e.message));
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="lead-intelligence-layout">
+            <aside className="apollo-sidebar-rail">
+                <div className="sidebar-section">
+                    <h5 className="sidebar-section-title">Trade Filters</h5>
+                    <div className="apollo-filter-list">
+                        <div className="apollo-filter-item">
+                            <label>Keyword</label>
+                            <input value={filters.keyword} onChange={e => updateFilter('keyword', e.target.value)} placeholder="spice, tiles, quartz..." />
+                        </div>
+                        <div className="apollo-filter-item">
+                            <label>HS Code</label>
+                            <input value={filters.hsCode} onChange={e => updateFilter('hsCode', e.target.value)} placeholder="09109100" />
+                        </div>
+                        <div className="apollo-filter-item">
+                            <label>Destination Country</label>
+                            <input value={filters.country} onChange={e => updateFilter('country', e.target.value)} placeholder="United States" />
+                        </div>
+                        <div className="apollo-filter-item">
+                            <label>Shipper</label>
+                            <input value={filters.shipperName} onChange={e => updateFilter('shipperName', e.target.value)} placeholder="MTR Foods" />
+                        </div>
+                        <div className="apollo-filter-item">
+                            <label>Consignee</label>
+                            <input value={filters.consigneeName} onChange={e => updateFilter('consigneeName', e.target.value)} placeholder="Buyer name" />
+                        </div>
+                        <div className="apollo-filter-item">
+                            <label>Segment</label>
+                            <select value={filters.marketSegment} onChange={e => updateFilter('marketSegment', e.target.value)}>
+                                <option value="">All Segments</option>
+                                <option value="general">General</option>
+                                <option value="building_material">Building Material</option>
+                            </select>
+                        </div>
+                        <div className="apollo-filter-item">
+                            <label>Port</label>
+                            <input value={filters.port} onChange={e => updateFilter('port', e.target.value)} placeholder="Dubai, Mundra..." />
+                        </div>
+                        <div className="apollo-filter-item">
+                            <label>Shipment Mode</label>
+                            <input value={filters.shipmentMode} onChange={e => updateFilter('shipmentMode', e.target.value)} placeholder="Sea, Air, Road..." />
+                        </div>
+                        <div className="apollo-filter-item">
+                            <label>Limit</label>
+                            <select value={filters.limit} onChange={e => updateFilter('limit', parseInt(e.target.value, 10))}>
+                                {[25, 50, 100].map(num => <option key={num} value={num}>{num} rows</option>)}
+                            </select>
+                        </div>
+                        <button className="enrich-btn-primary" onClick={runSearch} disabled={loading} style={{ marginTop: '1rem' }}>
+                            <Search size={16}/> {loading ? 'Searching...' : 'Search Intelligence'}
+                        </button>
+                    </div>
+                </div>
+            </aside>
+
+            <div className="lead-intelligence-main">
+                <div className="welcome-banner" style={{ marginBottom: '1rem' }}>
+                    <h2>Market Intelligence Engine</h2>
+                    <p>Search shipment history, buyers, suppliers, destination countries, price bands, and trade routes in one workspace.</p>
+                </div>
+
+                <div className="dashboard-grid" style={{ marginBottom: '1.5rem' }}>
+                    <DashboardCard
+                        title="Total Records"
+                        items={[`${overview?.totals?.total_records || 0} shipment rows`, `${overview?.totals?.active_hs_codes || 0} HS codes live`]}
+                        icon={<Database size={18} className="text-blue-400" />}
+                        tone="sky"
+                    />
+                    <DashboardCard
+                        title="Top Countries"
+                        items={(overview?.topCountries || []).slice(0, 3).map(item => `${item.label} (${item.count})`)}
+                        icon={<Globe size={18} className="text-green-400" />}
+                        tone="emerald"
+                    />
+                    <DashboardCard
+                        title="Top Shippers"
+                        items={(overview?.topShippers || []).slice(0, 3).map(item => `${item.label} (${item.count})`)}
+                        icon={<Briefcase size={18} className="text-orange-400" />}
+                        tone="amber"
+                    />
+                </div>
+
+                <div className="lead-table-container">
+                    <table className="lead-data-table">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>HS Code</th>
+                                <th>Buyer</th>
+                                <th>Shipper</th>
+                                <th>Destination</th>
+                                <th>Route</th>
+                                <th>Value</th>
+                                <th>Segment</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {rows.map(row => (
+                                <tr key={row.id}>
+                                    <td>{row.product_description}</td>
+                                    <td>{row.hs_code}</td>
+                                    <td>{row.consignee_name}</td>
+                                    <td>{row.shipper_name}</td>
+                                    <td>{row.country_of_destination}</td>
+                                    <td>{row.port_of_origin} to {row.port_of_destination}</td>
+                                    <td>{row.estimated_fob_value_usd || row.quantity_value}</td>
+                                    <td>{row.market_segment}</td>
+                                </tr>
+                            ))}
+                            {rows.length === 0 && (
+                                <tr>
+                                    <td colSpan="8" style={{ textAlign: 'center', padding: '3rem', color: '#64748b' }}>
+                                        Run a search to explore buyers, shippers, products, and trade routes from the imported intelligence dataset.
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    );
 }
 
 function NavItem({ icon, label, active, onClick }) {

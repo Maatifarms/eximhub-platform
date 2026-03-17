@@ -28,6 +28,11 @@ export const discoveryApi = {
     getAnalytics: () => api.get('/discovery/analytics'),
 };
 
+export const marketIntelligenceApi = {
+    search: (filters) => api.post('/market-intelligence/search', filters),
+    getOverview: () => api.get('/market-intelligence/overview'),
+};
+
 export const creditsApi = {
     reveal: (contactIds) => api.post('/credits/reveal', { contactIds }),
     getBalance: () => api.get('/credits/balance'),

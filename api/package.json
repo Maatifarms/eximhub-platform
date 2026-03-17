@@ -7,7 +7,8 @@
     "start": "node server.js",
     "dev": "node server.js",
     "setup-db": "node setup_db.js",
-    "import:contacts": "node import_contacts_csv.js"
+    "import:contacts": "node import_contacts_csv.js",
+    "import:market-intelligence": "node import_market_intelligence.js"
   },
   "keywords": [],
   "author": "",
