@@ -4,6 +4,8 @@ const fs = require('fs');
 const path = require('path');
 const db = require('../db');
 const auth = require('../middleware/auth');
+const requireAdmin = require('../middleware/requireAdmin');
+const adminController = require('../controllers/adminController');
 const { importContactsCsv } = require('../import_contacts_lib');
 
 const router = express.Router();
@@ -13,28 +15,14 @@ fs.mkdirSync(uploadDir, { recursive: true });
 
 const upload = multer({ dest: uploadDir });
 
-const isAdmin = async (req, res, next) => {
-  try {
-    const [users] = await db.execute('SELECT subscription_tier FROM users WHERE id = ?', [req.user.id]);
-    if (users[0] && (users[0].subscription_tier === 'Enterprise' || users[0].subscription_tier === 'Admin')) {
-      return next();
-    }
+router.post('/create-user', [auth, requireAdmin], adminController.createUser);
 
-    return res.status(403).json({
-      success: false,
-      message: "Admin access required. Tier must be 'Enterprise' or 'Admin'.",
-    });
-  } catch (error) {
-    return res.status(500).json({ success: false, message: 'Admin check failed' });
-  }
-};
-
-router.get('/companies', [auth, isAdmin], async (req, res) => {
+router.get('/companies', [auth, requireAdmin], async (req, res) => {
   const [rows] = await db.execute('SELECT * FROM companies ORDER BY created_at DESC LIMIT 100');
   res.json({ success: true, data: rows });
 });
 
-router.post('/companies', [auth, isAdmin], async (req, res) => {
+router.post('/companies', [auth, requireAdmin], async (req, res) => {
   const { company_name, industry, country, website } = req.body;
   const [result] = await db.execute(
     'INSERT INTO companies (company_name, industry, country, website) VALUES (?, ?, ?, ?)',
@@ -43,12 +31,12 @@ router.post('/companies', [auth, isAdmin], async (req, res) => {
   res.json({ success: true, id: result.insertId });
 });
 
-router.get('/contacts', [auth, isAdmin], async (req, res) => {
+router.get('/contacts', [auth, requireAdmin], async (req, res) => {
   const [rows] = await db.execute('SELECT * FROM contacts ORDER BY created_at DESC LIMIT 100');
   res.json({ success: true, data: rows });
 });
 
-router.post('/contacts', [auth, isAdmin], async (req, res) => {
+router.post('/contacts', [auth, requireAdmin], async (req, res) => {
   const { company_id, full_name, title, email, phone } = req.body;
   const [result] = await db.execute(
     'INSERT INTO contacts (company_id, full_name, title, email, phone) VALUES (?, ?, ?, ?, ?)',
@@ -57,7 +45,7 @@ router.post('/contacts', [auth, isAdmin], async (req, res) => {
   res.json({ success: true, id: result.insertId });
 });
 
-router.post('/upload/contacts', [auth, isAdmin, upload.single('file')], async (req, res) => {
+router.post('/upload/contacts', [auth, requireAdmin, upload.single('file')], async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ success: false, message: 'No CSV file uploaded' });
   }

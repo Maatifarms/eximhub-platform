@@ -6,6 +6,7 @@ const TABLE_STATEMENTS = [
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255),
     email VARCHAR(255) UNIQUE NOT NULL,
+    role ENUM('admin', 'user') NOT NULL DEFAULT 'user',
     phone VARCHAR(50),
     password_hash VARCHAR(255),
     google_id VARCHAR(255),
@@ -141,6 +142,27 @@ async function ensureIndex(connection, dbName, tableName, indexName, statement) 
   }
 }
 
+async function ensureColumn(connection, dbName, tableName, columnName, definition, backfillStatement = null) {
+  const [rows] = await connection.execute(
+    `SELECT 1
+     FROM information_schema.columns
+     WHERE table_schema = ? AND table_name = ? AND column_name = ?
+     LIMIT 1`,
+    [dbName, tableName, columnName]
+  );
+
+  if (rows.length === 0) {
+    await connection.query(`ALTER TABLE \`${tableName}\` ADD COLUMN ${definition}`);
+    console.log(`Added column ${tableName}.${columnName}.`);
+  } else {
+    console.log(`Column ${tableName}.${columnName} already exists.`);
+  }
+
+  if (backfillStatement) {
+    await connection.query(backfillStatement);
+  }
+}
+
 async function ensureTrigger(connection, dbName) {
   const [rows] = await connection.execute(
     `SELECT 1
@@ -182,6 +204,15 @@ async function setup() {
       await connection.query(statement);
     }
     console.log('Tables verified successfully.');
+
+    await ensureColumn(
+      connection,
+      dbName,
+      'users',
+      'role',
+      "role ENUM('admin', 'user') NOT NULL DEFAULT 'user' AFTER email",
+      "UPDATE users SET role = CASE WHEN subscription_tier = 'Admin' THEN 'admin' ELSE 'user' END"
+    );
 
     for (const [tableName, indexName, statement] of INDEX_DEFINITIONS) {
       await ensureIndex(connection, dbName, tableName, indexName, statement);

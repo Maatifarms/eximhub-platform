@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255),
     email VARCHAR(255) UNIQUE NOT NULL,
+    role ENUM('admin', 'user') NOT NULL DEFAULT 'user',
     phone VARCHAR(50),
     password_hash VARCHAR(255),
     google_id VARCHAR(255),

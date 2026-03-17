@@ -31,6 +31,15 @@ app.use('/api/credits', creditRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/marketplace', marketplaceRoutes);
 
+app.use((req, res) => {
+    res.status(404).json({ success: false, message: 'Route not found' });
+});
+
+app.use((err, req, res, next) => {
+    console.error('UNHANDLED_ERROR:', err);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+});
+
 app.listen(PORT, () => {
     console.log(`EximHub Server running on port ${PORT}`);
 });
