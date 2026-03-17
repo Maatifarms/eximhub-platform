@@ -58,6 +58,18 @@ Import it from `eximhub-platform/api` with:
 npm.cmd run import:contacts -- --file "..\database\imports\eximhub-contacts.csv"
 ```
 
+For a full database-state restore, use the SQL snapshot workflow in:
+
+```text
+database/exports/eximhub_db.sql
+```
+
+from the repo root:
+
+```powershell
+.\database\import_db.ps1
+```
+
 ## Requirements
 
 - MySQL must be running

@@ -48,6 +48,22 @@ cd api
 npm.cmd run import:contacts -- --file "C:\Users\My Laptop\Downloads\Eximhub Contacts.csv"
 ```
 
+## Full SQL snapshot
+
+Export the exact current database state:
+
+```powershell
+.\database\export_db.ps1
+```
+
+Restore the checked-in SQL snapshot:
+
+```powershell
+.\database\import_db.ps1
+```
+
+This snapshot includes schema, triggers, and row data so the database can be reproduced more directly than a CSV-only import.
+
 ## Admin upload flow
 
 The admin panel upload tab now uses the same importer as the CLI path.
