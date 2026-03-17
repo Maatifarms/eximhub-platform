@@ -25,6 +25,7 @@ const creditRoutes = require('./routes/credits');
 const adminRoutes = require('./routes/admin');
 const marketplaceRoutes = require('./routes/marketplace');
 const marketIntelligenceRoutes = require('./routes/marketIntelligence');
+const siteRoutes = require('./routes/site');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/discovery', discoveryRoutes);
@@ -32,6 +33,7 @@ app.use('/api/credits', creditRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/marketplace', marketplaceRoutes);
 app.use('/api/market-intelligence', marketIntelligenceRoutes);
+app.use('/api/site', siteRoutes);
 
 app.use((req, res) => {
     res.status(404).json({ success: false, message: 'Route not found' });

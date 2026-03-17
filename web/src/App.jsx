@@ -14,6 +14,12 @@ import AdminUploadPanel from './AdminUploadPanel';
 import LandingPage from './LandingPage';
 import BuyerProfilePage from './BuyerProfilePage';
 import CompanyDirectory from './CompanyDirectory';
+import ContactPage from './ContactPage';
+import PolicyPage from './PolicyPage';
+import PublicNav from './components/PublicNav';
+import SiteFooter from './components/SiteFooter';
+import { primaryContact } from './siteContent';
+import { privacySections, refundSections } from './legalContent';
 import { CheckCircle } from 'lucide-react';
 import './index.css';
 
@@ -28,6 +34,11 @@ const PricingPage = ({ user, onAuthSuccess }) => {
   };
 
   const handleSelectPlan = async (planId) => {
+    if (planId === 'enterprise') {
+      navigate('/contact');
+      return;
+    }
+
     if (!user) {
       navigate('/signup');
       return;
@@ -63,15 +74,10 @@ const PricingPage = ({ user, onAuthSuccess }) => {
 
   return (
     <div className="pricing-page">
-      <nav className="landing-nav">
-        <Link to="/" className="logo-text">EximHub AI</Link>
-        <div className="nav-links">
-          <Link to="/login" className="btn-secondary">Login</Link>
-        </div>
-      </nav>
+      <PublicNav />
       <div className="section-header" style={{ marginTop: '4rem' }}>
         <h1>Trade Expansion Programs</h1>
-        <p>Clear plans for exporters who want faster buyer discovery and a smoother path to global growth.</p>
+        <p>Clear plans for exporters who want faster buyer discovery, stronger market intelligence, and a smoother path to global growth.</p>
       </div>
       <div className="pricing-grid" style={{ padding: '0 2rem 4rem' }}>
         <PricingCard
@@ -95,13 +101,26 @@ const PricingPage = ({ user, onAuthSuccess }) => {
           features={['Unlimited Credits', 'Bespoke Sourcing Strategy', 'Dedicated Trade Consultant']}
           onSelect={() => handleSelectPlan('enterprise')}
           loading={loadingPlan === 'enterprise'}
+          buttonLabel="Talk to Sales"
         />
       </div>
+      <div className="pricing-support-card">
+        <h3>Need help before you pay?</h3>
+        <p>
+          Tell us your product, target market, or buyer requirement and we will guide you to the right EximHub plan.
+        </p>
+        <div className="pricing-support-links">
+          <a href={`mailto:${primaryContact.email}`}>{primaryContact.email}</a>
+          <a href={`tel:${primaryContact.phone.replace(/\s+/g, '')}`}>{primaryContact.phone}</a>
+          <Link to="/contact">Open contact form</Link>
+        </div>
+      </div>
+      <SiteFooter />
     </div>
   );
 };
 
-const PricingCard = ({ title, price, features, highlight, onSelect, loading }) => (
+const PricingCard = ({ title, price, features, highlight, onSelect, loading, buttonLabel = 'Select Plan' }) => (
   <div className={`pricing-card ${highlight ? 'highlighted' : ''}`}>
     <h3>{title}</h3>
     <div className="price">{price}</div>
@@ -114,7 +133,7 @@ const PricingCard = ({ title, price, features, highlight, onSelect, loading }) =
       ))}
     </ul>
     <button className="btn-primary" onClick={onSelect} disabled={loading} style={{ marginTop: '2rem' }}>
-      {loading ? 'Processing Payment...' : 'Select Plan'}
+      {loading ? 'Processing Payment...' : buttonLabel}
     </button>
   </div>
 );
@@ -144,6 +163,9 @@ function AppContent() {
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/pricing" element={<PricingPage user={user} onAuthSuccess={(nextUser) => setUser(nextUser)} />} />
+      <Route path="/contact" element={<ContactPage />} />
+      <Route path="/privacy" element={<PolicyPage title="Privacy Policy" intro="This page explains how EximHub collects, uses, and protects information when you use our website, create an account, contact us, or purchase services." effectiveDate="March 17, 2026" sections={privacySections} />} />
+      <Route path="/refund-policy" element={<PolicyPage title="Refund Policy" intro="This policy explains how refunds, billing issues, cancellations, and digital-service access are handled for EximHub plans and related services." effectiveDate="March 17, 2026" sections={refundSections} />} />
       <Route path="/book" element={<BookPage />} />
       <Route path="/admin/upload" element={<AdminUploadPanel />} />
       <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <AuthUI isLogin={true} onAuthSuccess={(nextUser) => setUser(nextUser)} />} />
@@ -283,6 +305,15 @@ function AuthUI({ isLogin, onAuthSuccess }) {
             {isLogin ? 'Sign up' : 'Login'}
           </Link>
         </p>
+        <div className="auth-support-row">
+          <a href={`mailto:${primaryContact.email}`}>{primaryContact.email}</a>
+          <a href={`tel:${primaryContact.phone.replace(/\s+/g, '')}`}>{primaryContact.phone}</a>
+          <Link to="/contact">Contact Us</Link>
+        </div>
+        <div className="auth-legal-row">
+          <Link to="/privacy">Privacy Policy</Link>
+          <Link to="/refund-policy">Refund Policy</Link>
+        </div>
         <Link to="/" className="btn-logout" style={{ display: 'block', textAlign: 'center', marginTop: '1rem', textDecoration: 'none' }}>Back to Home</Link>
       </div>
     </div>

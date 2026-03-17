@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const userModel = require('../models/userModel');
+const { sendSignupWelcomeEmail } = require('../services/emailService');
 
 function normalizeEmail(email) {
   return String(email || '').trim().toLowerCase();
@@ -57,6 +58,10 @@ async function signup(req, res) {
       email: normalizedEmail,
       passwordHash,
       role: 'user',
+    });
+
+    sendSignupWelcomeEmail(user).catch((emailError) => {
+      console.error('SIGNUP_WELCOME_EMAIL_ERROR:', emailError);
     });
 
     return res.status(201).json(buildAuthPayload(user));

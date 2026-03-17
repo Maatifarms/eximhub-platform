@@ -1,6 +1,24 @@
 import React from 'react';
-import { Globe, Shield, Zap, BarChart3, Users, BookOpen, ArrowRight, CheckCircle2, Cpu } from 'lucide-react';
+import {
+  Globe,
+  Shield,
+  Zap,
+  BarChart3,
+  Users,
+  BookOpen,
+  ArrowRight,
+  CheckCircle2,
+  Cpu,
+  Building2,
+  Mail,
+  PhoneCall,
+  MessageSquareMore,
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
+import PublicNav from './components/PublicNav';
+import SiteFooter from './components/SiteFooter';
+import ContactForm from './components/ContactForm';
+import { officeLocations, primaryContact } from './siteContent';
 
 export default function LandingPage() {
   return (
@@ -11,24 +29,19 @@ export default function LandingPage() {
         <span className="orbital-ring ring-three"></span>
         <span className="orbital-core"></span>
       </div>
-      <nav className="landing-nav">
-        <div className="logo-text">EximHub AI</div>
-        <div className="nav-links">
-          <a href="#features">Features</a>
-          <Link to="/pricing">Pricing</Link>
-          <Link to="/login" className="btn-secondary">Login</Link>
-          <Link to="/signup" className="btn-primary">Start Searching</Link>
-        </div>
-      </nav>
+      <PublicNav showFeatureLink={true} />
 
       <section className="hero">
         <div className="hero-content">
           <div className="hero-badge">World's largest buyer and supplier network across 170+ countries</div>
-          <h1><span className="text-gradient">EximHub</span> is your direct gateway to global buyers and suppliers.</h1>
-          <p>Built as a trade operating system for exporters, importers, sourcing teams, and business owners, EximHub gives you direct buyer and supplier discovery across 170+ countries from one fast, usable platform.</p>
+          <h1><span className="text-gradient">EximHub</span> is your direct gateway to global buyers, suppliers, and market intelligence.</h1>
+          <p>
+            Built as a trade operating system for exporters, importers, sourcing teams, and business owners,
+            EximHub gives you buyer search, supplier discovery, and market signals from one fast, usable platform.
+          </p>
           <div className="hero-actions">
             <Link to="/signup" className="btn-primary-lg">Start with 100 free credits <ArrowRight size={20} /></Link>
-            <Link to="/pricing" className="btn-outline-lg">See plans</Link>
+            <Link to="/contact" className="btn-outline-lg">Talk to EximHub</Link>
           </div>
           <div className="hero-stats">
             <div className="stat">
@@ -44,6 +57,10 @@ export default function LandingPage() {
               <span className="stat-label">Trade Intelligence</span>
             </div>
           </div>
+          <div className="hero-contact-bar">
+            <a href={`mailto:${primaryContact.email}`}><Mail size={16} /> {primaryContact.email}</a>
+            <a href={`tel:${primaryContact.phone.replace(/\s+/g, '')}`}><PhoneCall size={16} /> {primaryContact.phone}</a>
+          </div>
         </div>
 
         <div className="hero-visual" aria-hidden="true">
@@ -55,7 +72,7 @@ export default function LandingPage() {
                   <div className="hero-panel-title">Opportunity score</div>
                   <div className="hero-score">87<span>/100</span></div>
                 </div>
-                <div className="hero-mini-pill">Germany · Packaging</div>
+                <div className="hero-mini-pill">Germany / Packaging</div>
               </div>
               <div className="hero-meter">
                 <div className="hero-meter-fill"></div>
@@ -261,23 +278,76 @@ export default function LandingPage() {
             <h3>Enterprise</h3>
             <div className="price">Custom</div>
             <p>For larger teams needing custom workflows</p>
-            <Link to="/signup" className="btn-primary" style={{ marginTop: '1.5rem' }}>Contact Sales</Link>
+            <Link to="/contact" className="btn-primary" style={{ marginTop: '1.5rem' }}>Contact Sales</Link>
           </div>
         </div>
+      </section>
+
+      <section className="contact-proof-strip">
+        <div className="contact-proof-card">
+          <Mail size={20} />
+          <div>
+            <strong>Email us directly</strong>
+            <span>{primaryContact.email}</span>
+          </div>
+        </div>
+        <div className="contact-proof-card">
+          <PhoneCall size={20} />
+          <div>
+            <strong>Call our team</strong>
+            <span>{primaryContact.phone}</span>
+          </div>
+        </div>
+        <div className="contact-proof-card">
+          <Building2 size={20} />
+          <div>
+            <strong>Global presence</strong>
+            <span>{officeLocations.length} active office locations</span>
+          </div>
+        </div>
+      </section>
+
+      <section className="contact-conversion-section">
+        <div className="contact-conversion-copy">
+          <span className="support-pill">Need help choosing a plan?</span>
+          <h2>Contact us before you buy and we will guide you to the right EximHub access.</h2>
+          <p>
+            If you are serious about buyer discovery, market entry, or exporter growth, do not guess.
+            Tell us what you want to sell and where you want to sell it. We will help you choose the right plan faster.
+          </p>
+          <div className="contact-mini-grid">
+            <div className="contact-mini-card">
+              <MessageSquareMore size={18} />
+              <span>Share your product and target country</span>
+            </div>
+            <div className="contact-mini-card">
+              <PhoneCall size={18} />
+              <span>Get a direct callback from EximHub</span>
+            </div>
+            <div className="contact-mini-card">
+              <Building2 size={18} />
+              <span>Work with a team that understands trade operations</span>
+            </div>
+          </div>
+        </div>
+
+        <ContactForm
+          title="Send your buyer requirement"
+          subtitle="We will use this to recommend the right plan, data support, or market-intelligence workflow."
+          buttonLabel="Contact EximHub"
+        />
       </section>
 
       <section className="cta-footer">
         <h2>Ready to grow internationally with less friction?</h2>
         <p>We are building EximHub to be the most practical, user-friendly trade growth platform for exporters who care about speed and clarity.</p>
         <div className="footer-actions">
-          <Link to="/signup" className="btn-primary">Buy Access</Link>
-          <Link to="/signup" className="btn-secondary">Start Searching</Link>
+          <Link to="/pricing" className="btn-primary">Buy Access</Link>
+          <Link to="/contact" className="btn-secondary">Talk to Sales</Link>
         </div>
       </section>
 
-      <footer className="main-footer">
-        <p>&copy; 2026 EximHub Global Trade Intelligence. All rights reserved.</p>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

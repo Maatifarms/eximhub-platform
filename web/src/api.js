@@ -55,4 +55,8 @@ export const adminApi = {
     getContacts: () => api.get('/admin/contacts'),
 };
 
+export const siteApi = {
+    submitContactInquiry: (data) => api.post('/site/contact', data),
+};
+
 export default api;

@@ -179,6 +179,17 @@ CREATE TABLE IF NOT EXISTS market_intelligence_records (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS contact_inquiries (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    phone VARCHAR(100),
+    company_name VARCHAR(255),
+    interest VARCHAR(150),
+    message TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE INDEX idx_mi_country ON market_intelligence_records(country_of_destination);
 CREATE INDEX idx_mi_hs_code ON market_intelligence_records(hs_code);
 CREATE INDEX idx_mi_shipper ON market_intelligence_records(shipper_name);

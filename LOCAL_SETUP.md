@@ -6,6 +6,15 @@ API:
 
 1. Copy `api/.env.example` to `api/.env`
 2. Fill in the database credentials if they differ from your local defaults
+3. For automated signup and contact emails, also configure:
+   - `FRONTEND_BASE_URL`
+   - `SALES_EMAIL`
+   - `SMTP_HOST`
+   - `SMTP_PORT`
+   - `SMTP_SECURE`
+   - `SMTP_USER`
+   - `SMTP_PASS`
+   - `SMTP_FROM`
 
 Admin panel:
 
@@ -72,3 +81,13 @@ The admin panel upload tab now supports:
 - Incremental market-intelligence CSV ingestion (`/api/admin/upload/market-intelligence`)
 
 Use an `Admin` or `Enterprise` account, open the Bulk Ingestion tab, choose a CSV, and start the import.
+
+## Public trust pages and contact flow
+
+The web app now includes:
+
+- `/contact` for direct inquiry capture
+- `/privacy` for the privacy policy
+- `/refund-policy` for the refund policy
+
+Contact form submissions are stored in `contact_inquiries` and can trigger email notifications once SMTP is configured.
