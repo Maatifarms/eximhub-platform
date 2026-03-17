@@ -66,6 +66,9 @@ This snapshot includes schema, triggers, and row data so the database can be rep
 
 ## Admin upload flow
 
-The admin panel upload tab now uses the same importer as the CLI path.
+The admin panel upload tab now supports:
+
+- Contacts CSV ingestion (`/api/admin/upload/contacts`)
+- Incremental market-intelligence CSV ingestion (`/api/admin/upload/market-intelligence`)
 
 Use an `Admin` or `Enterprise` account, open the Bulk Ingestion tab, choose a CSV, and start the import.

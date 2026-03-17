@@ -7,6 +7,7 @@ const auth = require('../middleware/auth');
 const requireAdmin = require('../middleware/requireAdmin');
 const adminController = require('../controllers/adminController');
 const { importContactsCsv } = require('../import_contacts_lib');
+const { importMarketIntelligenceCsv } = require('../import_market_intelligence_lib');
 
 const router = express.Router();
 
@@ -64,6 +65,34 @@ router.post('/upload/contacts', [auth, requireAdmin, upload.single('file')], asy
     return res.status(500).json({
       success: false,
       message: `Upload processing failed: ${error.message}`,
+    });
+  } finally {
+    fs.promises.unlink(uploadedFilePath).catch(() => {});
+  }
+});
+
+router.post('/upload/market-intelligence', [auth, requireAdmin, upload.single('file')], async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ success: false, message: 'No CSV file uploaded' });
+  }
+
+  const uploadedFilePath = req.file.path;
+  const dryRun = String(req.body?.dryRun || '').toLowerCase() === 'true';
+
+  try {
+    const summary = await importMarketIntelligenceCsv(uploadedFilePath, { dryRun });
+    return res.json({
+      success: true,
+      message: dryRun
+        ? `Dry run complete. ${summary.rowsRead} rows parsed.`
+        : `Market intelligence import complete. Inserted ${summary.rowsInserted}, updated ${summary.rowsUpdated}.`,
+      data: summary,
+    });
+  } catch (error) {
+    console.error('UPLOAD_MARKET_INTELLIGENCE_ERROR:', error);
+    return res.status(500).json({
+      success: false,
+      message: `Market intelligence upload failed: ${error.message}`,
     });
   } finally {
     fs.promises.unlink(uploadedFilePath).catch(() => {});

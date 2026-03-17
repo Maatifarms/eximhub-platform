@@ -265,6 +265,8 @@ function ContactsTab() {
 
 function UploadTab() {
   const [file, setFile] = useState(null);
+  const [importType, setImportType] = useState('contacts');
+  const [dryRun, setDryRun] = useState(false);
   const [status, setStatus] = useState('idle');
   const [message, setMessage] = useState('');
   const [summary, setSummary] = useState(null);
@@ -284,9 +286,16 @@ function UploadTab() {
 
     const formData = new FormData();
     formData.append('file', file);
+    if (importType === 'market-intelligence') {
+      formData.append('dryRun', String(dryRun));
+    }
 
     try {
-      const response = await api.post('/admin/upload/contacts', formData, {
+      const endpoint = importType === 'contacts'
+        ? '/admin/upload/contacts'
+        : '/admin/upload/market-intelligence';
+
+      const response = await api.post(endpoint, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
@@ -297,7 +306,7 @@ function UploadTab() {
       }
     } catch (error) {
       setStatus('error');
-      setMessage(error.response?.data?.message || 'Upload failed. Verify CSV format and admin access.');
+      setMessage(error.response?.data?.message || 'Upload failed. Verify CSV format, file size, and admin access.');
     }
   };
 
@@ -308,8 +317,34 @@ function UploadTab() {
           <div className="upload-icon-frame">
             <FileSpreadsheet size={44} className="text-blue-500" />
           </div>
-          <h3>Customer Search Data Import</h3>
-          <p>Upload a contacts CSV and EximHub will deduplicate companies and contacts before indexing them for search.</p>
+          <h3>{importType === 'contacts' ? 'Customer Search Data Import' : 'Market Intelligence Incremental Import'}</h3>
+          <p>
+            {importType === 'contacts'
+              ? 'Upload a contacts CSV and EximHub will deduplicate companies and contacts before indexing them for search.'
+              : 'Upload a market-intelligence master CSV and EximHub will upsert rows by hash for safe incremental updates.'}
+          </p>
+
+          <div className="field" style={{ width: '100%', marginBottom: '0.75rem' }}>
+            <label>Import Type</label>
+            <select value={importType} onChange={(event) => { setImportType(event.target.value); resetState(); }}>
+              <option value="contacts">Contacts</option>
+              <option value="market-intelligence">Market Intelligence</option>
+            </select>
+          </div>
+
+          {importType === 'market-intelligence' && (
+            <div className="field" style={{ width: '100%', marginBottom: '0.75rem' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <input
+                  type="checkbox"
+                  checked={dryRun}
+                  onChange={(event) => { setDryRun(event.target.checked); resetState(); }}
+                />
+                Dry run only (validate rows, no DB write)
+              </label>
+            </div>
+          )}
+
           <input
             type="file"
             accept=".csv,text/csv"
@@ -329,15 +364,28 @@ function UploadTab() {
 
         <div className="upload-info">
           <h4>What happens during import</h4>
-          <ul>
-            <li><CheckCircle size={14} color="#10b981" /> Companies are deduplicated before insert.</li>
-            <li><CheckCircle size={14} color="#10b981" /> Contacts are deduplicated by email, LinkedIn, or fallback identity match.</li>
-            <li><CheckCircle size={14} color="#10b981" /> Procurement-style titles are auto-detected for customer discovery search.</li>
-            <li><CheckCircle size={14} color="#10b981" /> Re-uploading the same CSV is safe and should mostly skip duplicates.</li>
-          </ul>
+          {importType === 'contacts' ? (
+            <ul>
+              <li><CheckCircle size={14} color="#10b981" /> Companies are deduplicated before insert.</li>
+              <li><CheckCircle size={14} color="#10b981" /> Contacts are deduplicated by email, LinkedIn, or fallback identity match.</li>
+              <li><CheckCircle size={14} color="#10b981" /> Procurement-style titles are auto-detected for customer discovery search.</li>
+              <li><CheckCircle size={14} color="#10b981" /> Re-uploading the same CSV is safe and should mostly skip duplicates.</li>
+            </ul>
+          ) : (
+            <ul>
+              <li><CheckCircle size={14} color="#10b981" /> Rows are upserted by `eximhub_row_hash` for incremental imports.</li>
+              <li><CheckCircle size={14} color="#10b981" /> Existing records update in place when hashes match.</li>
+              <li><CheckCircle size={14} color="#10b981" /> New rows are added without touching existing contact data.</li>
+              <li><CheckCircle size={14} color="#10b981" /> Dry run validates CSV quality before heavy writes.</li>
+            </ul>
+          )}
 
           <button className="btn-upload-primary" onClick={handleUpload} disabled={!file || status === 'uploading'}>
-            {status === 'uploading' ? <><Loader2 size={16} className="spin" /> Processing import...</> : 'Start Batch Import'}
+            {status === 'uploading'
+              ? <><Loader2 size={16} className="spin" /> Processing import...</>
+              : importType === 'contacts'
+                ? 'Start Contacts Import'
+                : dryRun ? 'Run Market Intelligence Dry Run' : 'Start Market Intelligence Import'}
           </button>
 
           {message && (
@@ -352,14 +400,23 @@ function UploadTab() {
       {summary && (
         <div className="import-summary-card">
           <h3>Import Summary</h3>
-          <div className="import-summary-grid">
-            <SummaryItem label="Rows Read" value={summary.rowsRead} />
-            <SummaryItem label="Contacts Inserted" value={summary.contactsInserted} />
-            <SummaryItem label="Contacts Skipped" value={summary.contactsSkipped} />
-            <SummaryItem label="New Companies" value={summary.companiesCreated} />
-            <SummaryItem label="Reused Companies" value={summary.companiesReused} />
-            <SummaryItem label="Procurement Contacts" value={summary.procurementContacts} />
-          </div>
+          {importType === 'contacts' ? (
+            <div className="import-summary-grid">
+              <SummaryItem label="Rows Read" value={summary.rowsRead} />
+              <SummaryItem label="Contacts Inserted" value={summary.contactsInserted} />
+              <SummaryItem label="Contacts Skipped" value={summary.contactsSkipped} />
+              <SummaryItem label="New Companies" value={summary.companiesCreated} />
+              <SummaryItem label="Reused Companies" value={summary.companiesReused} />
+              <SummaryItem label="Procurement Contacts" value={summary.procurementContacts} />
+            </div>
+          ) : (
+            <div className="import-summary-grid">
+              <SummaryItem label="Rows Read" value={summary.rowsRead} />
+              <SummaryItem label="Rows Inserted" value={summary.rowsInserted} />
+              <SummaryItem label="Rows Updated" value={summary.rowsUpdated} />
+              <SummaryItem label="Rows Skipped" value={summary.rowsSkipped} />
+            </div>
+          )}
         </div>
       )}
     </div>
