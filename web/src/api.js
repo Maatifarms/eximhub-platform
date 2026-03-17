@@ -19,6 +19,8 @@ export const authApi = {
     login: (email, password) => api.post('/auth/login', { email, password }),
     signup: (data) => api.post('/auth/signup', data),
     changePassword: (currentPassword, newPassword) => api.post('/auth/change-password', { currentPassword, newPassword }),
+    resetPassword: (email) => api.post('/auth/reset-password', { email }),
+    googleLogin: (googleToken) => api.post('/auth/google', { googleToken }),
 };
 
 export const discoveryApi = {

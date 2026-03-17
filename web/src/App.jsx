@@ -7,18 +7,60 @@ import {
   useNavigate,
   Link,
 } from 'react-router-dom';
-import { authApi } from './api';
+import { authApi, marketplaceApi } from './api';
 import Dashboard from './Dashboard';
 import UserDashboard from './UserDashboard';
 import AdminUploadPanel from './AdminUploadPanel';
 import LandingPage from './LandingPage';
 import BuyerProfilePage from './BuyerProfilePage';
 import CompanyDirectory from './CompanyDirectory';
-import { Phone, CheckCircle } from 'lucide-react';
+import { CheckCircle } from 'lucide-react';
 import './index.css';
 
-const PricingPage = () => {
+const PricingPage = ({ user, onAuthSuccess }) => {
   const navigate = useNavigate();
+  const [loadingPlan, setLoadingPlan] = useState(null);
+
+  const planConfig = {
+    program_1: { tier: 'Program 1', points: 500 },
+    program_2: { tier: 'Program 2', points: 1200 },
+    enterprise: { tier: 'Enterprise', points: 10000 },
+  };
+
+  const handleSelectPlan = async (planId) => {
+    if (!user) {
+      navigate('/signup');
+      return;
+    }
+
+    const selected = planConfig[planId];
+    if (!selected) return;
+
+    const confirmed = window.confirm(`Confirm payment and upgrade to ${selected.tier}?`);
+    if (!confirmed) return;
+
+    setLoadingPlan(planId);
+    try {
+      const paymentId = `LOCALPAY-${Date.now()}`;
+      const response = await marketplaceApi.upgrade(planId, paymentId);
+      if (response.data.success) {
+        const nextUser = {
+          ...user,
+          subscription_tier: selected.tier,
+          points_balance: Number(user.points_balance || 0) + selected.points,
+        };
+        localStorage.setItem('exim_user', JSON.stringify(nextUser));
+        onAuthSuccess(nextUser);
+        alert(response.data.message || 'Plan upgraded successfully.');
+        navigate('/dashboard');
+      }
+    } catch (error) {
+      alert(error.response?.data?.message || error.message || 'Payment failed');
+    } finally {
+      setLoadingPlan(null);
+    }
+  };
+
   return (
     <div className="pricing-page">
       <nav className="landing-nav">
@@ -36,27 +78,30 @@ const PricingPage = () => {
           title="Program 1"
           price="Rs 25,000"
           features={['500 Procurement Credits', 'Market Intelligence Access', 'Standard Support']}
-          onSelect={() => navigate('/signup')}
+          onSelect={() => handleSelectPlan('program_1')}
+          loading={loadingPlan === 'program_1'}
         />
         <PricingCard
           title="Program 2"
           price="Rs 45,000"
           highlight={true}
           features={['1,200 Procurement Credits', 'Priority AI Discovery', 'Global Sales Partner Status']}
-          onSelect={() => navigate('/signup')}
+          onSelect={() => handleSelectPlan('program_2')}
+          loading={loadingPlan === 'program_2'}
         />
         <PricingCard
           title="Enterprise"
           price="Custom"
           features={['Unlimited Credits', 'Bespoke Sourcing Strategy', 'Dedicated Trade Consultant']}
-          onSelect={() => navigate('/signup')}
+          onSelect={() => handleSelectPlan('enterprise')}
+          loading={loadingPlan === 'enterprise'}
         />
       </div>
     </div>
   );
 };
 
-const PricingCard = ({ title, price, features, highlight, onSelect }) => (
+const PricingCard = ({ title, price, features, highlight, onSelect, loading }) => (
   <div className={`pricing-card ${highlight ? 'highlighted' : ''}`}>
     <h3>{title}</h3>
     <div className="price">{price}</div>
@@ -68,7 +113,9 @@ const PricingCard = ({ title, price, features, highlight, onSelect }) => (
         </li>
       ))}
     </ul>
-    <button className="btn-primary" onClick={onSelect} style={{ marginTop: '2rem' }}>Select Plan</button>
+    <button className="btn-primary" onClick={onSelect} disabled={loading} style={{ marginTop: '2rem' }}>
+      {loading ? 'Processing Payment...' : 'Select Plan'}
+    </button>
   </div>
 );
 
@@ -96,7 +143,7 @@ function AppContent() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
-      <Route path="/pricing" element={<PricingPage />} />
+      <Route path="/pricing" element={<PricingPage user={user} onAuthSuccess={(nextUser) => setUser(nextUser)} />} />
       <Route path="/book" element={<BookPage />} />
       <Route path="/admin/upload" element={<AdminUploadPanel />} />
       <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <AuthUI isLogin={true} onAuthSuccess={(nextUser) => setUser(nextUser)} />} />
@@ -112,10 +159,19 @@ function AuthUI({ isLogin, onAuthSuccess }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [info, setInfo] = useState('');
+  const [resetEmail, setResetEmail] = useState('');
+  const [showReset, setShowReset] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleEmailAuth = async (event) => {
     event.preventDefault();
+    setError('');
+    setInfo('');
+    setLoading(true);
     try {
       const response = isLogin
         ? await authApi.login(email, password)
@@ -129,12 +185,35 @@ function AuthUI({ isLogin, onAuthSuccess }) {
         navigate('/dashboard');
       }
     } catch (error) {
-      alert(error.response?.data?.message || error.message);
+      setError(error.response?.data?.message || error.message || 'Authentication failed');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleGoogleLogin = async () => {
-    alert('Google Login will be integrated via Hostinger Social Auth. For now, please use Email login.');
+    setInfo('Google login is coming soon. Please use email login for now.');
+  };
+
+  const handleResetPassword = async () => {
+    const targetEmail = (resetEmail || email || '').trim();
+    if (!targetEmail) {
+      setError('Enter your email to reset password.');
+      return;
+    }
+
+    setResetLoading(true);
+    setError('');
+    setInfo('');
+    try {
+      const response = await authApi.resetPassword(targetEmail);
+      setInfo(response.data?.message || 'Password reset request submitted.');
+      setShowReset(false);
+    } catch (error) {
+      setError(error.response?.data?.message || error.message || 'Could not process password reset');
+    } finally {
+      setResetLoading(false);
+    }
   };
 
   return (
@@ -149,11 +228,9 @@ function AuthUI({ isLogin, onAuthSuccess }) {
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/layout/google.svg" width="18" alt="G" />
             Continue with Google
           </button>
-          <button className="btn-social">
-            <Phone size={18} />
-            Continue with Phone
-          </button>
         </div>
+        {error && <p style={{ color: '#ef4444', marginBottom: '0.75rem', textAlign: 'center' }}>{error}</p>}
+        {info && <p style={{ color: '#22c55e', marginBottom: '0.75rem', textAlign: 'center' }}>{info}</p>}
         <div className="divider">or use email</div>
         <form onSubmit={handleEmailAuth}>
           {!isLogin && (
@@ -168,10 +245,36 @@ function AuthUI({ isLogin, onAuthSuccess }) {
           </div>
           <div className="input-group">
             <label>Password</label>
-            <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} required />
+            <input type="password" minLength={8} value={password} onChange={(event) => setPassword(event.target.value)} required />
           </div>
+          {isLogin && (
+            <p style={{ marginTop: '-0.5rem', marginBottom: '1rem', textAlign: 'right' }}>
+              <button
+                type="button"
+                onClick={() => setShowReset((prev) => !prev)}
+                style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', cursor: 'pointer', padding: 0 }}
+              >
+                Forgot password?
+              </button>
+            </p>
+          )}
+          {showReset && (
+            <div className="input-group">
+              <label>Reset Email</label>
+              <input type="email" value={resetEmail} onChange={(event) => setResetEmail(event.target.value)} placeholder="you@company.com" />
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={handleResetPassword}
+                disabled={resetLoading}
+                style={{ marginTop: '0.5rem' }}
+              >
+                {resetLoading ? 'Sending...' : 'Send Reset Link'}
+              </button>
+            </div>
+          )}
           <button type="submit" className="login-button">
-            {isLogin ? 'Login to Dashboard' : 'Create Account'}
+            {loading ? 'Please wait...' : isLogin ? 'Login to Dashboard' : 'Create Account'}
           </button>
         </form>
         <p style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
