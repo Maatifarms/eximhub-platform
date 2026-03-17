@@ -1,0 +1,16 @@
+{
+  "expo": {
+    "name": "EximHub",
+    "slug": "eximhub",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "android": {
+      "package": "com.eximhub.app"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "5fe34f5d-ffed-48ff-9f5a-a2b2a05b459d"
+      }
+    }
+  }
+}

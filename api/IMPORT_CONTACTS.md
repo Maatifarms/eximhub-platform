@@ -44,6 +44,20 @@ Real import:
 npm.cmd run import:contacts -- --file "C:\Users\My Laptop\Downloads\Eximhub Contacts.csv"
 ```
 
+## Checked-in dataset
+
+The repository can also include an import-ready dataset snapshot at:
+
+```text
+database/imports/eximhub-contacts.csv
+```
+
+Import it from `eximhub-platform/api` with:
+
+```powershell
+npm.cmd run import:contacts -- --file "..\database\imports\eximhub-contacts.csv"
+```
+
 ## Requirements
 
 - MySQL must be running

@@ -14,4 +14,3 @@ yarn-error.log*
 api/db_data/
 api/uploads/
 api/server_log.txt
-mobile/
