@@ -169,7 +169,7 @@ function AppContent() {
       <Route path="/book" element={<BookPage />} />
       <Route path="/admin/upload" element={<AdminUploadPanel />} />
       <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <AuthUI isLogin={true} onAuthSuccess={(nextUser) => setUser(nextUser)} />} />
-      <Route path="/signup" element={user ? <Navigate to="/dashboard" /> : <AuthUI isLogin={false} onAuthSuccess={(nextUser) => setUser(nextUser)} />} />
+      <Route path="/signup" element={<Navigate to="/contact" />} />
       <Route path="/dashboard" element={user ? ((user.subscription_tier?.toLowerCase() === 'enterprise' || user.subscription_tier?.toLowerCase() === 'admin') ? <Dashboard user={user} /> : <UserDashboard user={user} />) : <Navigate to="/login" />} />
       <Route path="/profile/:id" element={user ? <BuyerProfilePage /> : <Navigate to="/login" />} />
       <Route path="/directory" element={user ? <CompanyDirectory /> : <Navigate to="/login" />} />
@@ -300,9 +300,9 @@ function AuthUI({ isLogin, onAuthSuccess }) {
           </button>
         </form>
         <p style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-          {isLogin ? "Don't have an account?" : 'Already have an account?'}
-          <Link to={isLogin ? '/signup' : '/login'} style={{ color: 'var(--accent-primary)', marginLeft: '0.5rem' }}>
-            {isLogin ? 'Sign up' : 'Login'}
+          {isLogin ? "Need an account?" : 'Already have an account?'}
+          <Link to={isLogin ? '/contact' : '/login'} style={{ color: 'var(--accent-primary)', marginLeft: '0.5rem' }}>
+            {isLogin ? 'Request access' : 'Login'}
           </Link>
         </p>
         <div className="auth-support-row">

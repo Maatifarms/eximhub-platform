@@ -31,7 +31,7 @@ export default function DiscoveryScreen({ navigation }: any) {
   const handleSearch = async () => {
     setLoading(true);
     try {
-      const res = await searchGlobal(country, keyword);
+        const res = await searchGlobal('', country, keyword, '', 20);
       if (res.data.success) {
         setContacts(res.data.data);
       }

@@ -41,6 +41,23 @@ function normalizeValue(value) {
   return trimmed === '' ? null : trimmed;
 }
 
+function normalizeWebsite(value) {
+  const normalized = normalizeValue(value);
+  if (!normalized) return null;
+
+  const compact = normalized.replace(/\\/g, '').trim();
+  if (compact.length === 0) return null;
+
+  const looksLikeUrl = /^(https?:\/\/|www\.)/i.test(compact);
+  const looksLikeDomain = /^[a-z0-9.-]+\.[a-z]{2,}(\/.*)?$/i.test(compact);
+  const hasWhitespace = /\s/.test(compact);
+
+  if (hasWhitespace) return null;
+  if (!looksLikeUrl && !looksLikeDomain) return null;
+
+  return compact;
+}
+
 function sqlParams(values) {
   return values.map((value) => (value === undefined ? null : value));
 }
@@ -86,7 +103,7 @@ function readCsvRows(filePath) {
 
 async function ensureCompany(connection, companyCache, row) {
   const companyName = normalizeValue(row.company_name);
-  const website = normalizeValue(row.website);
+  const website = normalizeWebsite(row.website);
   const industry = normalizeValue(row.industry);
   const country = normalizeValue(row.country);
 
@@ -186,7 +203,7 @@ async function importRows(rows, dryRun = false) {
           summary.companiesReused += 1;
         }
       } else {
-        const companyResult = await ensureCompany(connection, companyCache, row);
+      const companyResult = await ensureCompany(connection, companyCache, row);
         companyId = companyResult.companyId;
         if (hadCompany || !companyResult.created) {
           summary.companiesReused += 1;

@@ -60,6 +60,7 @@ function App() {
         </div>
         <nav className="admin-nav">
           <NavItem icon={<LayoutDashboard size={20} />} label="Overview" active={activeTab === 'Overview'} onClick={() => setActiveTab('Overview')} />
+          <NavItem icon={<Users size={20} />} label="Users" active={activeTab === 'Users'} onClick={() => setActiveTab('Users')} />
           <NavItem icon={<Building size={20} />} label="Companies" active={activeTab === 'Companies'} onClick={() => setActiveTab('Companies')} />
           <NavItem icon={<Users size={20} />} label="Contacts" active={activeTab === 'Contacts'} onClick={() => setActiveTab('Contacts')} />
           <NavItem icon={<Upload size={20} />} label="Bulk Ingestion" active={activeTab === 'Upload'} onClick={() => setActiveTab('Upload')} />
@@ -84,11 +85,122 @@ function App() {
 
         <div className="admin-content">
           {activeTab === 'Overview' && <OverviewTab />}
+          {activeTab === 'Users' && <UsersTab />}
           {activeTab === 'Companies' && <CompaniesTab />}
           {activeTab === 'Contacts' && <ContactsTab />}
           {activeTab === 'Upload' && <UploadTab />}
         </div>
       </main>
+    </div>
+  );
+}
+
+function UsersTab() {
+  const [users, setUsers] = useState([]);
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    password: '',
+    role: 'user',
+  });
+  const [status, setStatus] = useState('');
+  const [error, setError] = useState('');
+
+  const loadUsers = async () => {
+    try {
+      const response = await api.get('/admin/users');
+      setUsers(response.data.data || []);
+    } catch {
+      setUsers([]);
+    }
+  };
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setStatus('');
+    setError('');
+
+    try {
+      const response = await api.post('/admin/create-user', form);
+      setStatus(response.data.message || 'User created successfully');
+      setForm({ name: '', email: '', password: '', role: 'user' });
+      loadUsers();
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || 'Failed to create user');
+    }
+  };
+
+  return (
+    <div className="upload-shell">
+      <div className="upload-container">
+        <div className="upload-info">
+          <h4>Create User</h4>
+          <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '0.75rem' }}>
+            <div className="field">
+              <label>Name</label>
+              <input value={form.name} onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))} placeholder="User name" />
+            </div>
+            <div className="field">
+              <label>Email</label>
+              <input type="email" value={form.email} onChange={(event) => setForm((prev) => ({ ...prev, email: event.target.value }))} required />
+            </div>
+            <div className="field">
+              <label>Password</label>
+              <input type="password" value={form.password} onChange={(event) => setForm((prev) => ({ ...prev, password: event.target.value }))} minLength={8} required />
+            </div>
+            <div className="field">
+              <label>Role</label>
+              <select value={form.role} onChange={(event) => setForm((prev) => ({ ...prev, role: event.target.value }))}>
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <button type="submit" className="btn-upload-primary">Create User</button>
+          </form>
+          {status && <div className="upload-status success"><CheckCircle size={18} /><span>{status}</span></div>}
+          {error && <div className="upload-status error"><AlertTriangle size={18} /><span>{error}</span></div>}
+        </div>
+
+        <div className="upload-info">
+          <h4>Access Rule</h4>
+          <ul>
+            <li><CheckCircle size={14} color="#10b981" /> Public self-signup is disabled.</li>
+            <li><CheckCircle size={14} color="#10b981" /> New accounts must be created from this admin panel.</li>
+            <li><CheckCircle size={14} color="#10b981" /> User discovery history stays separate, so repeated results are blocked per user.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div className="admin-table-container" style={{ marginTop: '1.5rem' }}>
+        <table className="admin-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Tier</th>
+              <th>Points</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.map((user) => (
+              <tr key={user.id}>
+                <td>{user.id}</td>
+                <td className="font-bold">{user.name}</td>
+                <td>{user.email}</td>
+                <td>{user.role}</td>
+                <td>{user.subscription_tier}</td>
+                <td>{user.points_balance}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

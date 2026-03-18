@@ -26,7 +26,7 @@ export default function SiteFooter() {
           <Link to="/privacy">Privacy Policy</Link>
           <Link to="/refund-policy">Refund Policy</Link>
           <Link to="/login">Login</Link>
-          <Link to="/signup">Create Account</Link>
+          <Link to="/contact">Request Access</Link>
         </div>
 
         <div className="footer-column">

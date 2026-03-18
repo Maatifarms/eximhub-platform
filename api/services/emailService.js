@@ -48,9 +48,13 @@ function getFrontendBaseUrl() {
   return process.env.FRONTEND_BASE_URL || 'https://eximhub.pro';
 }
 
+function getSalesEmail() {
+  return process.env.SALES_EMAIL || 'rupesh2510@gmail.com';
+}
+
 async function sendSignupWelcomeEmail(user) {
   const pricingUrl = `${getFrontendBaseUrl()}/pricing`;
-  const salesEmail = process.env.SALES_EMAIL || 'info@eximhub.pro';
+  const salesEmail = getSalesEmail();
 
   const userMail = sendMail({
     from: process.env.SMTP_FROM,
@@ -108,7 +112,7 @@ async function sendSignupWelcomeEmail(user) {
 }
 
 async function sendContactInquiryNotifications(inquiry) {
-  const salesEmail = process.env.SALES_EMAIL || 'info@eximhub.pro';
+  const salesEmail = getSalesEmail();
   const siteUrl = getFrontendBaseUrl();
 
   const adminMail = sendMail({

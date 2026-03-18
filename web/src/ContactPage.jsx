@@ -13,10 +13,9 @@ export default function ContactPage() {
       <main className="page-content">
         <section className="page-hero">
           <span className="support-pill">Talk to EximHub</span>
-          <h1>Reach us directly for plans, buyer search support, and market-intelligence help.</h1>
+          <h1>Reach us for plans, buyer search support, and market intelligence.</h1>
           <p>
-            If you are deciding which plan to buy or you want help finding the right buyers,
-            send us your requirement and our team will contact you.
+            Send us your requirement and our team will contact you.
           </p>
           <div className="page-hero-links">
             <a href={`mailto:${primaryContact.email}`}><Mail size={16} /> {primaryContact.email}</a>
@@ -27,7 +26,7 @@ export default function ContactPage() {
         <section className="contact-grid">
           <ContactForm
             title="Request a callback or demo"
-            subtitle="Share your product, target market, or buyer requirement. We will guide you to the right EximHub plan."
+            subtitle="Share your product, target market, or buyer requirement. We will guide you to the right plan."
             buttonLabel="Request Support"
           />
 
@@ -36,15 +35,15 @@ export default function ContactPage() {
               <h3>What happens next</h3>
               <div className="contact-step">
                 <Clock3 size={18} />
-                <span>We review your inquiry and contact you with the right plan or workflow.</span>
+                <span>We review your inquiry and suggest the right plan or workflow.</span>
               </div>
               <div className="contact-step">
                 <PhoneCall size={18} />
-                <span>For serious buyers and exporters, we can follow up directly by phone or email.</span>
+                <span>We can follow up directly by phone or email.</span>
               </div>
               <div className="contact-step">
                 <MapPin size={18} />
-                <span>We support customers through our India, Germany, UAE, and Tanzania presence.</span>
+                <span>We support customers through India, Germany, UAE, and Tanzania.</span>
               </div>
             </div>
 

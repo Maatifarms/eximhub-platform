@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS companies (
     id INT AUTO_INCREMENT PRIMARY KEY,
     company_name VARCHAR(255) NOT NULL,
     industry VARCHAR(100),
-    website VARCHAR(255),
+    website TEXT,
     company_size VARCHAR(50),
     country VARCHAR(100),
     state VARCHAR(100),

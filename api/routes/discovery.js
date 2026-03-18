@@ -3,6 +3,132 @@ const router = express.Router();
 const db = require('../db');
 const auth = require('../middleware/auth');
 
+router.get('/directory', auth, async (req, res) => {
+    const query = String(req.query.query || '').trim();
+    const industry = String(req.query.industry || '').trim();
+    const country = String(req.query.country || '').trim();
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 24, 1), 100);
+    const offset = (page - 1) * limit;
+
+    try {
+        let whereSql = 'WHERE 1 = 1';
+        const params = [];
+
+        if (query) {
+            whereSql += ' AND (c.company_name LIKE ? OR c.industry LIKE ? OR c.country LIKE ?)';
+            params.push(`%${query}%`, `%${query}%`, `%${query}%`);
+        }
+
+        if (industry) {
+            whereSql += ' AND c.industry = ?';
+            params.push(industry);
+        }
+
+        if (country) {
+            whereSql += ' AND c.country = ?';
+            params.push(country);
+        }
+
+        const [rows] = await db.query(
+            `
+            SELECT
+                c.id,
+                c.company_name,
+                c.industry,
+                c.website,
+                c.company_size,
+                c.country,
+                COUNT(ct.id) AS contact_count,
+                SUM(CASE WHEN ct.is_procurement = 1 THEN 1 ELSE 0 END) AS procurement_contact_count
+            FROM companies c
+            LEFT JOIN contacts ct ON ct.company_id = c.id
+            ${whereSql}
+            GROUP BY c.id, c.company_name, c.industry, c.website, c.company_size, c.country
+            ORDER BY procurement_contact_count DESC, contact_count DESC, c.company_name ASC
+            LIMIT ? OFFSET ?
+            `,
+            [...params, limit, offset]
+        );
+
+        const [[countRow]] = await db.query(
+            `
+            SELECT COUNT(*) AS total
+            FROM companies c
+            ${whereSql}
+            `,
+            params
+        );
+
+        res.json({
+            success: true,
+            data: rows,
+            pagination: {
+                page,
+                limit,
+                total: countRow.total,
+                totalPages: Math.max(Math.ceil(countRow.total / limit), 1),
+            },
+        });
+    } catch (e) {
+        console.error('DIRECTORY ERROR:', e);
+        res.status(500).json({ success: false, message: 'Failed to fetch directory', error: e.message });
+    }
+});
+
+router.get('/contacts/:id', auth, async (req, res) => {
+    const contactId = parseInt(req.params.id, 10);
+    const userId = req.user.id;
+
+    if (!Number.isInteger(contactId) || contactId <= 0) {
+        return res.status(400).json({ success: false, message: 'Invalid contact id' });
+    }
+
+    try {
+        const [rows] = await db.query(
+            `
+            SELECT
+                c.id,
+                c.company_id,
+                c.first_name,
+                c.last_name,
+                c.full_name,
+                c.title,
+                c.email,
+                c.phone,
+                c.linkedin,
+                c.country,
+                c.industry,
+                c.is_procurement,
+                co.company_name,
+                co.website,
+                co.company_size,
+                co.country AS company_country,
+                co.industry AS company_industry,
+                EXISTS(
+                    SELECT 1
+                    FROM reveals r
+                    WHERE r.user_id = ? AND r.contact_id = c.id
+                ) AS is_revealed
+            FROM contacts c
+            JOIN companies co ON co.id = c.company_id
+            WHERE c.id = ?
+            LIMIT 1
+            `,
+            [userId, contactId]
+        );
+
+        if (rows.length === 0) {
+            return res.status(404).json({ success: false, message: 'Contact not found' });
+        }
+
+        res.json({ success: true, data: rows[0] });
+    } catch (e) {
+        console.error('CONTACT PROFILE ERROR:', e);
+        res.status(500).json({ success: false, message: 'Failed to fetch contact', error: e.message });
+    }
+});
+
 // Discovery Search: Search-as-Reveal logic (Procurement Discovery)
 router.post('/search', auth, async (req, res) => {
     const { industry, country, product_keyword, company_name, limit = 2 } = req.body;
@@ -53,8 +179,8 @@ router.post('/search', auth, async (req, res) => {
         selectSql += ` AND c.id NOT IN (SELECT contact_id FROM reveals WHERE user_id = ?)`;
         params.push(userId);
 
-        // Randomize and limit
-        selectSql += " ORDER BY RAND() LIMIT ?";
+        // Stable ordering performs much better than ORDER BY RAND() as the dataset grows.
+        selectSql += " ORDER BY comp.company_name ASC, c.id ASC LIMIT ?";
         params.push(parseInt(limit));
 
         const [contacts] = await connection.query(selectSql, params);

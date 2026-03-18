@@ -24,16 +24,32 @@ function Test-MySqlAlive {
     }
 }
 
+function Wait-ForMySql {
+    param(
+        [int]$TimeoutSeconds = 30
+    )
+
+    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+    while ((Get-Date) -lt $deadline) {
+        if (Test-MySqlAlive) {
+            return $true
+        }
+
+        Start-Sleep -Seconds 1
+    }
+
+    return $false
+}
+
 Write-Host 'Starting EximHub local stack...' -ForegroundColor Cyan
 
 if (-not $SkipMySql) {
     if (-not (Test-MySqlAlive)) {
         Write-Host 'Starting MySQL...' -ForegroundColor Yellow
         Start-Process -FilePath $mysqldPath -ArgumentList "--console --datadir=$mysqlDataDir --port=3306 --bind-address=127.0.0.1" | Out-Null
-        Start-Sleep -Seconds 5
     }
 
-    if (-not (Test-MySqlAlive)) {
+    if (-not (Wait-ForMySql)) {
         throw 'MySQL did not start successfully.'
     }
 

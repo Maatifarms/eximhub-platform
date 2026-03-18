@@ -26,6 +26,8 @@ export const authApi = {
 export const discoveryApi = {
     search: (industry, country, product_keyword, company_size, limit, company_name) => 
         api.post('/discovery/search', { industry, country, product_keyword, company_size, limit, company_name }),
+    getDirectory: (params) => api.get('/discovery/directory', { params }),
+    getContactById: (id) => api.get(`/discovery/contacts/${id}`),
     getTrends: () => api.get('/discovery/trends'),
     getAnalytics: () => api.get('/discovery/analytics'),
 };

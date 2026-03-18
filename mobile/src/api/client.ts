@@ -6,6 +6,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // 10.0.2.2 is the alias for localhost on Android emulators
 const BASE_URL = Platform.OS === 'android' ? 'http://10.0.2.2:5000/api' : 'http://localhost:5000/api';
 
+export let currentUserTier = 'Free';
+
+export function setTier(tier?: string | null) {
+  const normalized = String(tier || '').trim().toLowerCase();
+  currentUserTier = !normalized || normalized === 'trial' || normalized === 'free' ? 'Free' : String(tier);
+}
+
 export const apiClient = axios.create({
   baseURL: BASE_URL,
 });
@@ -49,4 +56,27 @@ export const marketplaceApi = {
   buyBook: (bookId: number, paymentId: string) => apiClient.post('/marketplace/buy-book', { bookId, paymentId }),
   getLibrary: () => apiClient.get('/marketplace/library'),
   upgrade: (planId: string, paymentId: string) => apiClient.post('/marketplace/upgrade', { planId, paymentId }),
+};
+
+export const getSampleInquiries = async () => {
+  return Promise.resolve({
+    data: [
+      {
+        id: 1,
+        product: 'Ceramic Tiles',
+        quantity: '2 containers',
+        destination_country: 'Germany',
+        buyer_type: 'Importer',
+        inquiry_date: new Date().toISOString(),
+      },
+      {
+        id: 2,
+        product: 'Spice Mixes',
+        quantity: '5 MT',
+        destination_country: 'UAE',
+        buyer_type: 'Distributor',
+        inquiry_date: new Date(Date.now() - 86400000).toISOString(),
+      },
+    ],
+  });
 };

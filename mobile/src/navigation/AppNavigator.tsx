@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 /* eslint-disable @typescript-eslint/no-var-requires */
 // @ts-ignore
 import { createStackNavigator } from '@react-navigation/stack';
 import { NavigationContainer } from '@react-navigation/native';
 import { Globe, Briefcase, Bot, Upload, Library, BookOpen, MessageSquare, UserCircle, LineChart, CreditCard, ShoppingCart, LogOut } from 'lucide-react-native';
-import { setTier, currentUserTier } from '../api/client';
+import { setTier } from '../api/client';
 
 import DiscoveryScreen from '../screens/DiscoveryScreen';
 import CrmScreen from '../screens/CrmScreen';
@@ -20,10 +21,6 @@ import IntelligenceScreen from '../screens/IntelligenceScreen';
 import BuyerProfileScreen from '../screens/BuyerProfileScreen';
 import LoginScreen from '../screens/LoginScreen';
 import PricingScreen from '../screens/PricingScreen';
-
-import { auth, db } from '../api/firebase';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { doc, onSnapshot } from 'firebase/firestore';
 
 const Drawer = createDrawerNavigator();
 const Stack = createStackNavigator();
@@ -47,23 +44,13 @@ function DiscoveryStack() {
 }
 
 function CustomDrawerContent(props: any) {
-  const [userData, setUserData] = useState<any>(null);
-
-  useEffect(() => {
-    if (auth.currentUser) {
-      const unsub = onSnapshot(doc(db, 'users', auth.currentUser.uid), (doc) => {
-        setUserData(doc.data());
-      });
-      return unsub;
-    }
-  }, []);
-
+  const { userData, onLogout } = props;
   return (
     <View style={{ flex: 1, backgroundColor: '#0f172a' }}>
       <View style={styles.profileSection}>
         <UserCircle size={60} color="#3b82f6" />
         <Text style={styles.profileName}>{userData?.name || 'Globetrotter'}</Text>
-        <Text style={styles.profileEmail}>{auth.currentUser?.email}</Text>
+        <Text style={styles.profileEmail}>{userData?.email || 'info@eximhub.pro'}</Text>
         
         <View style={styles.creditsBadge}>
             <Text style={styles.creditsLabel}>Master Points</Text>
@@ -92,7 +79,7 @@ function CustomDrawerContent(props: any) {
         })}
       </View>
 
-      <TouchableOpacity style={styles.logoutBtn} onPress={() => signOut(auth)}>
+      <TouchableOpacity style={styles.logoutBtn} onPress={onLogout}>
         <LogOut size={20} color="#ef4444" />
         <Text style={styles.logoutText}>Logout</Text>
       </TouchableOpacity>
@@ -101,16 +88,38 @@ function CustomDrawerContent(props: any) {
 }
 
 export default function AppNavigator() {
-  const [user, setUser] = useState<any>(null);
+  const [userData, setUserData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setLoading(false);
-    });
-    return unsubscribe;
+    loadSession();
   }, []);
+
+  const loadSession = async () => {
+    try {
+      const storedUser = await AsyncStorage.getItem('exim_user');
+      if (storedUser) {
+        const parsed = JSON.parse(storedUser);
+        setUserData(parsed);
+        setTier(parsed.subscription_tier);
+      } else {
+        setUserData(null);
+        setTier('Free');
+      }
+    } catch (error) {
+      console.error('MOBILE_SESSION_LOAD_ERROR:', error);
+      setUserData(null);
+      setTier('Free');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await AsyncStorage.multiRemove(['exim_token', 'exim_user']);
+    setUserData(null);
+    setTier('Free');
+  };
 
   if (loading) {
     return (
@@ -121,14 +130,14 @@ export default function AppNavigator() {
     );
   }
 
-  if (!user) {
-    return <LoginScreen />;
+  if (!userData) {
+    return <LoginScreen onAuthSuccess={loadSession} />;
   }
 
   return (
     <NavigationContainer>
       <Drawer.Navigator 
-        drawerContent={(props) => <CustomDrawerContent {...props} />}
+        drawerContent={(props) => <CustomDrawerContent {...props} userData={userData} onLogout={handleLogout} />}
         screenOptions={{
           headerStyle: { backgroundColor: '#0f172a', elevation: 0, shadowOpacity: 0, borderBottomWidth: 1, borderBottomColor: '#1e293b' },
           headerTintColor: '#fff',

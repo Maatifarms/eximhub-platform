@@ -21,7 +21,7 @@ const TABLE_STATEMENTS = [
     id INT AUTO_INCREMENT PRIMARY KEY,
     company_name VARCHAR(255) NOT NULL,
     industry VARCHAR(100),
-    website VARCHAR(255),
+    website TEXT,
     company_size VARCHAR(50),
     country VARCHAR(100),
     state VARCHAR(100),
@@ -168,6 +168,11 @@ const INDEX_DEFINITIONS = [
   ['contacts', 'idx_contact_is_procurement', 'CREATE INDEX idx_contact_is_procurement ON contacts(is_procurement)'],
   ['contacts', 'idx_contact_industry', 'CREATE INDEX idx_contact_industry ON contacts(industry)'],
   ['contacts', 'idx_contact_country', 'CREATE INDEX idx_contact_country ON contacts(country)'],
+  ['contacts', 'idx_contact_company_procurement', 'CREATE INDEX idx_contact_company_procurement ON contacts(company_id, is_procurement)'],
+  ['contacts', 'idx_contact_title', 'CREATE INDEX idx_contact_title ON contacts(title(191))'],
+  ['contacts', 'idx_contact_full_name', 'CREATE INDEX idx_contact_full_name ON contacts(full_name)'],
+  ['reveals', 'idx_reveals_user_contact', 'CREATE INDEX idx_reveals_user_contact ON reveals(user_id, contact_id)'],
+  ['reveals', 'idx_reveals_user_revealed_at', 'CREATE INDEX idx_reveals_user_revealed_at ON reveals(user_id, revealed_at)'],
   ['market_intelligence_records', 'idx_mi_country', 'CREATE INDEX idx_mi_country ON market_intelligence_records(country_of_destination)'],
   ['market_intelligence_records', 'idx_mi_hs_code', 'CREATE INDEX idx_mi_hs_code ON market_intelligence_records(hs_code)'],
   ['market_intelligence_records', 'idx_mi_shipper', 'CREATE INDEX idx_mi_shipper ON market_intelligence_records(shipper_name)'],
@@ -224,6 +229,28 @@ async function ensureColumn(connection, dbName, tableName, columnName, definitio
   }
 }
 
+async function ensureTextColumn(connection, dbName, tableName, columnName) {
+  const [rows] = await connection.execute(
+    `SELECT data_type AS data_type
+     FROM information_schema.columns
+     WHERE table_schema = ? AND table_name = ? AND column_name = ?
+     LIMIT 1`,
+    [dbName, tableName, columnName]
+  );
+
+  if (rows.length === 0) {
+    return;
+  }
+
+  const currentType = String(rows[0].data_type || '').toLowerCase();
+  if (currentType !== 'text' && currentType !== 'mediumtext' && currentType !== 'longtext') {
+    await connection.query(`ALTER TABLE \`${tableName}\` MODIFY COLUMN \`${columnName}\` TEXT`);
+    console.log(`Converted ${tableName}.${columnName} to TEXT.`);
+  } else {
+    console.log(`Column ${tableName}.${columnName} type already sufficient.`);
+  }
+}
+
 async function ensureTrigger(connection, dbName) {
   const [rows] = await connection.execute(
     `SELECT 1
@@ -274,6 +301,8 @@ async function setup() {
       "role ENUM('admin', 'user') NOT NULL DEFAULT 'user' AFTER email",
       "UPDATE users SET role = CASE WHEN subscription_tier = 'Admin' THEN 'admin' ELSE 'user' END"
     );
+
+    await ensureTextColumn(connection, dbName, 'companies', 'website');
 
     for (const [tableName, indexName, statement] of INDEX_DEFINITIONS) {
       await ensureIndex(connection, dbName, tableName, indexName, statement);

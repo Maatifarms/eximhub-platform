@@ -18,6 +18,16 @@ const upload = multer({ dest: uploadDir });
 
 router.post('/create-user', [auth, requireAdmin], adminController.createUser);
 
+router.get('/users', [auth, requireAdmin], async (req, res) => {
+  const [rows] = await db.execute(
+    `SELECT id, name, email, role, subscription_tier, points_balance, created_at
+     FROM users
+     ORDER BY id DESC
+     LIMIT 200`
+  );
+  res.json({ success: true, data: rows });
+});
+
 router.get('/companies', [auth, requireAdmin], async (req, res) => {
   const [rows] = await db.execute('SELECT * FROM companies ORDER BY created_at DESC LIMIT 100');
   res.json({ success: true, data: rows });

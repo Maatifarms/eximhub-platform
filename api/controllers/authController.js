@@ -1,7 +1,6 @@
-const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const userModel = require('../models/userModel');
-const { sendSignupWelcomeEmail } = require('../services/emailService');
+const bcrypt = require('bcryptjs');
 
 function normalizeEmail(email) {
   return String(email || '').trim().toLowerCase();
@@ -34,41 +33,10 @@ function buildAuthPayload(user) {
 }
 
 async function signup(req, res) {
-  try {
-    const { name, email, password } = req.body;
-
-    if (!name || !email || !password) {
-      return res.status(400).json({ success: false, message: 'Name, email, and password are required' });
-    }
-
-    if (String(password).length < 8) {
-      return res.status(400).json({ success: false, message: 'Password must be at least 8 characters long' });
-    }
-
-    const normalizedEmail = normalizeEmail(email);
-    const existingUser = await userModel.findByEmail(normalizedEmail);
-
-    if (existingUser) {
-      return res.status(409).json({ success: false, message: 'Email already registered' });
-    }
-
-    const passwordHash = await bcrypt.hash(password, 10);
-    const user = await userModel.createUser({
-      name: String(name).trim(),
-      email: normalizedEmail,
-      passwordHash,
-      role: 'user',
-    });
-
-    sendSignupWelcomeEmail(user).catch((emailError) => {
-      console.error('SIGNUP_WELCOME_EMAIL_ERROR:', emailError);
-    });
-
-    return res.status(201).json(buildAuthPayload(user));
-  } catch (error) {
-    console.error('SIGNUP_ERROR:', error);
-    return res.status(500).json({ success: false, message: 'Server error' });
-  }
+  return res.status(403).json({
+    success: false,
+    message: 'Self-signup is disabled. Please contact an admin to create your account.',
+  });
 }
 
 async function login(req, res) {

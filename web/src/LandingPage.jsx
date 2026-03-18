@@ -1,11 +1,9 @@
 import React from 'react';
 import {
   Globe,
-  Shield,
   Zap,
   BarChart3,
   Users,
-  BookOpen,
   ArrowRight,
   CheckCircle2,
   Cpu,
@@ -13,6 +11,8 @@ import {
   Mail,
   PhoneCall,
   MessageSquareMore,
+  Truck,
+  Boxes,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import PublicNav from './components/PublicNav';
@@ -36,11 +36,10 @@ export default function LandingPage() {
           <div className="hero-badge">World's largest buyer and supplier network across 170+ countries</div>
           <h1><span className="text-gradient">EximHub</span> is your direct gateway to global buyers, suppliers, and market intelligence.</h1>
           <p>
-            Built as a trade operating system for exporters, importers, sourcing teams, and business owners,
-            EximHub gives you buyer search, supplier discovery, and market signals from one fast, usable platform.
+            Search buyers, discover suppliers, and act on trade intelligence from one practical platform built for exporters.
           </p>
           <div className="hero-actions">
-            <Link to="/signup" className="btn-primary-lg">Start with 100 free credits <ArrowRight size={20} /></Link>
+            <Link to="/contact" className="btn-primary-lg">Request Access <ArrowRight size={20} /></Link>
             <Link to="/contact" className="btn-outline-lg">Talk to EximHub</Link>
           </div>
           <div className="hero-stats">
@@ -134,100 +133,91 @@ export default function LandingPage() {
       <section className="signal-strip" aria-label="Live trade signals">
         <div className="signal-card">
           <span className="signal-kicker">Global Reach</span>
-          <strong>Direct buyer and supplier access in 170+ countries</strong>
-          <p>One network built for exporters and sourcing teams that need immediate global coverage.</p>
+          <strong>Buyer and supplier access in 170+ countries</strong>
+          <p>Built for exporters who need quick global coverage.</p>
         </div>
         <div className="signal-card">
           <span className="signal-kicker">Core USP</span>
-          <strong>World-scale buyer and supplier collection</strong>
-          <p>Search verified business profiles, uncover decision makers, and move from research to outreach faster.</p>
+          <strong>Verified business profiles</strong>
+          <p>Find decision makers and move to outreach faster.</p>
         </div>
         <div className="signal-card">
           <span className="signal-kicker">Trade Stack</span>
-          <strong>Discovery, supplier sourcing, AI, and trade assets</strong>
-          <p>One operating surface instead of disconnected tools, spreadsheets, and scattered directories.</p>
+          <strong>Search, AI, and sourcing in one place</strong>
+          <p>No more scattered tools and spreadsheets.</p>
         </div>
       </section>
 
       <section id="features" className="features">
         <div className="section-header">
           <h2>Platform Overview</h2>
-          <p>The EximHub advantage starts with a massive cross-border buyer and supplier network, then turns that reach into a cleaner and faster trade workflow.</p>
+          <p>A cleaner workflow for finding buyers, validating markets, and moving faster.</p>
         </div>
         <div className="features-grid">
           <FeatureCard
             icon={<Users className="text-blue-500" />}
             title="Decision-Maker Discovery"
-            desc="Reach procurement managers and sourcing leaders instead of wasting time on generic directories."
+            desc="Reach procurement teams instead of wasting time on generic directories."
             metric="Buyer graph online"
           />
           <FeatureCard
             icon={<Globe className="text-green-500" />}
             title="Buyer and Supplier Mapping"
-            desc="Explore companies by country, industry, and product focus with a clearer trade view."
+            desc="Explore companies by country, industry, and product focus."
             metric="195-country mesh"
           />
           <FeatureCard
             icon={<Zap className="text-purple-500" />}
             title="Faster Go-to-Market"
-            desc="Turn search intent and lead discovery into outreach momentum without jumping between tools."
+            desc="Turn search into outreach momentum without tool switching."
             metric="Action layer active"
           />
           <FeatureCard
             icon={<BarChart3 className="text-orange-500" />}
             title="Market Intelligence"
-            desc="Use AI-backed context to prioritize markets, shortlist prospects, and plan the next step."
+            desc="Use market signals to shortlist prospects and act faster."
             metric="Signals refreshing"
           />
         </div>
       </section>
 
       <section className="services-grid-section">
-        <div className="service-row">
-          <div className="service-info">
-            <h3>Logistics and Freight Support</h3>
-            <p>We want EximHub to support the full export workflow, not just lead finding. This direction keeps the platform useful after discovery, when execution starts.</p>
-            <ul className="service-list">
-              <li><CheckCircle2 size={18} className="text-blue-400" /> Route Optimization</li>
-              <li><CheckCircle2 size={18} className="text-blue-400" /> Customs Clearance Assistance</li>
-              <li><CheckCircle2 size={18} className="text-blue-400" /> Real-time Rate Comparison</li>
-            </ul>
-          </div>
-          <div className="service-visual">
-            <div className="glass-card">
-              <Globe size={80} className="floating-icon" />
-            </div>
-          </div>
+        <div className="section-header">
+          <h2>More Than a Directory</h2>
+          <p>EximHub is designed to support trade growth after discovery as well.</p>
         </div>
-
-        <div className="service-row reverse">
-          <div className="service-info">
-            <h3>Inventory Liquidation Network</h3>
-            <p>Turn slow-moving stock into working capital with a buyer network tailored for bulk liquidation and urgent procurement opportunities.</p>
-            <ul className="service-list">
-              <li><CheckCircle2 size={18} className="text-blue-400" /> Instant Buyer Matching</li>
-              <li><CheckCircle2 size={18} className="text-blue-400" /> Global Bulk Auctions</li>
-              <li><CheckCircle2 size={18} className="text-blue-400" /> Anonymous Bidding</li>
-            </ul>
-          </div>
-          <div className="service-visual">
-            <div className="glass-card">
-              <Shield size={80} className="floating-icon" />
-            </div>
-          </div>
+        <div className="offerings-grid">
+          <CompactOfferCard
+            icon={<Truck className="text-blue-400" />}
+            title="Logistics Support"
+            desc="Stay supported after buyer discovery with execution-focused help."
+            bullets={['Route optimization', 'Customs support', 'Rate comparison']}
+          />
+          <CompactOfferCard
+            icon={<Boxes className="text-orange-500" />}
+            title="Liquidation Network"
+            desc="Move slow inventory faster through urgent procurement demand."
+            bullets={['Buyer matching', 'Bulk opportunities', 'Faster stock movement']}
+          />
+          <CompactOfferCard
+            icon={<Cpu className="text-green-500" />}
+            title="Trade Academy"
+            desc="Learn practical sourcing and export playbooks for real use."
+            bullets={['Operator-friendly guides', 'Market-entry lessons', 'Action-ready insights']}
+          />
         </div>
       </section>
 
       <section className="features bg-dark-soft">
         <div className="section-header">
           <h2>EximHub AI Trade Assistant</h2>
-          <p>Get faster answers on HS codes, buyer targeting, and market-entry questions without leaving your workflow.</p>
+          <p>Get faster answers on HS codes, buyer targeting, and market entry.</p>
         </div>
         <div className="service-row">
           <div className="service-info">
-            <h3>Ask practical trade questions. Get useful next steps.</h3>
-            <p>We are shaping the AI layer to be operator-friendly: concise recommendations, plain-language guidance, and action-ready insights.</p>
-            <Link to="/signup" className="btn-secondary">Try AI Assistant Free</Link>
+            <h3>Ask practical trade questions.</h3>
+            <p>Get concise next steps you can actually use.</p>
+            <Link to="/contact" className="btn-secondary">Request Access</Link>
           </div>
           <div className="service-visual">
             <div className="glass-card">
@@ -237,42 +227,23 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="features">
-        <div className="section-header">
-          <h2>Global Sourcing Mastery</h2>
-          <p>Learn the playbook behind better buyer discovery, outreach, and trade execution.</p>
-        </div>
-        <div className="service-row reverse">
-          <div className="service-info">
-            <h3>Digital Book: Global Trade Secrets</h3>
-            <p>Master the art of sourcing from 195 countries with our expert guide for Rs 500.</p>
-            <Link to="/book" className="btn-primary">Buy Digital Book</Link>
-          </div>
-          <div className="service-visual">
-            <div className="glass-card">
-              <BookOpen size={80} className="floating-icon text-green-500" />
-            </div>
-          </div>
-        </div>
-      </section>
-
       <section id="pricing" className="features">
         <div className="section-header">
           <h2>Scalable Pricing Programs</h2>
-          <p>Choose the level of access that matches your team size, search volume, and growth ambition.</p>
+          <p>Choose the access level that fits your growth stage.</p>
         </div>
         <div className="pricing-grid">
           <div className="pricing-card">
             <h3>Program 1</h3>
             <div className="price">Rs 25,000</div>
             <p>For exporters validating new markets</p>
-            <Link to="/signup" className="btn-primary" style={{ marginTop: '1.5rem' }}>Get Started</Link>
+            <Link to="/contact" className="btn-primary" style={{ marginTop: '1.5rem' }}>Request Access</Link>
           </div>
           <div className="pricing-card highlighted">
             <h3>Program 2</h3>
             <div className="price">Rs 45,000</div>
             <p>For teams actively scaling outreach</p>
-            <Link to="/signup" className="btn-primary" style={{ marginTop: '1.5rem' }}>Get Started</Link>
+            <Link to="/contact" className="btn-primary" style={{ marginTop: '1.5rem' }}>Request Access</Link>
           </div>
           <div className="pricing-card">
             <h3>Enterprise</h3>
@@ -310,23 +281,22 @@ export default function LandingPage() {
       <section className="contact-conversion-section">
         <div className="contact-conversion-copy">
           <span className="support-pill">Need help choosing a plan?</span>
-          <h2>Contact us before you buy and we will guide you to the right EximHub access.</h2>
+          <h2>Talk to us before you buy.</h2>
           <p>
-            If you are serious about buyer discovery, market entry, or exporter growth, do not guess.
-            Tell us what you want to sell and where you want to sell it. We will help you choose the right plan faster.
+            Tell us your product and target market. We will help you choose the right EximHub plan.
           </p>
           <div className="contact-mini-grid">
             <div className="contact-mini-card">
               <MessageSquareMore size={18} />
-              <span>Share your product and target country</span>
+              <span>Share product and target country</span>
             </div>
             <div className="contact-mini-card">
               <PhoneCall size={18} />
-              <span>Get a direct callback from EximHub</span>
+              <span>Get a direct callback</span>
             </div>
             <div className="contact-mini-card">
               <Building2 size={18} />
-              <span>Work with a team that understands trade operations</span>
+              <span>Work with a trade-focused team</span>
             </div>
           </div>
         </div>
@@ -340,7 +310,7 @@ export default function LandingPage() {
 
       <section className="cta-footer">
         <h2>Ready to grow internationally with less friction?</h2>
-        <p>We are building EximHub to be the most practical, user-friendly trade growth platform for exporters who care about speed and clarity.</p>
+        <p>Use EximHub to find buyers faster and move with more clarity.</p>
         <div className="footer-actions">
           <Link to="/pricing" className="btn-primary">Buy Access</Link>
           <Link to="/contact" className="btn-secondary">Talk to Sales</Link>
@@ -359,6 +329,24 @@ function FeatureCard({ icon, title, desc, metric }) {
       <div className="feature-metric">{metric}</div>
       <h3>{title}</h3>
       <p>{desc}</p>
+    </div>
+  );
+}
+
+function CompactOfferCard({ icon, title, desc, bullets }) {
+  return (
+    <div className="offering-card">
+      <div className="feature-icon">{icon}</div>
+      <h3>{title}</h3>
+      <p>{desc}</p>
+      <ul className="offering-list">
+        {bullets.map((bullet) => (
+          <li key={bullet}>
+            <CheckCircle2 size={16} className="text-blue-400" />
+            {bullet}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

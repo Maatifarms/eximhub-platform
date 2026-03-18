@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authApi } from '../api/client';
 import { LogIn, Mail, Phone, Globe, Shield, Chrome, User } from 'lucide-react-native';
 
-export default function LoginScreen() {
+export default function LoginScreen({ onAuthSuccess }: { onAuthSuccess?: () => Promise<void> | void }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -25,6 +25,7 @@ export default function LoginScreen() {
           const userData = res.data.data;
           await AsyncStorage.setItem('exim_token', userData.token);
           await AsyncStorage.setItem('exim_user', JSON.stringify(userData));
+          await onAuthSuccess?.();
           Alert.alert("Success", "Welcome back to EximHub!");
         }
       } else {
@@ -33,6 +34,7 @@ export default function LoginScreen() {
           const userData = res.data.data;
           await AsyncStorage.setItem('exim_token', userData.token);
           await AsyncStorage.setItem('exim_user', JSON.stringify(userData));
+          await onAuthSuccess?.();
           Alert.alert("Success", "Account created! 100 Credits added.");
         }
       }
