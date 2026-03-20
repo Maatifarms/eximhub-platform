@@ -1,7 +1,8 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.jsx'
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import './index.css';
+import App from './App.jsx';
+import { HelmetProvider } from 'react-helmet-async';
 
 console.log('Main.jsx: Starting React mount...');
 const rootElement = document.getElementById('root');
@@ -11,7 +12,9 @@ if (!rootElement) {
   console.log('Main.jsx: Root element found, rendering...');
   createRoot(rootElement).render(
     <StrictMode>
-      <App />
+      <HelmetProvider>
+        <App />
+      </HelmetProvider>
     </StrictMode>,
   );
 }

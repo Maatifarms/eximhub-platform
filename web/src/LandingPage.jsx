@@ -18,11 +18,38 @@ import { Link } from 'react-router-dom';
 import PublicNav from './components/PublicNav';
 import SiteFooter from './components/SiteFooter';
 import ContactForm from './components/ContactForm';
+import { Helmet } from 'react-helmet-async';
 import { officeLocations, primaryContact } from './siteContent';
 
 export default function LandingPage() {
+  const schemaMarkup = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "EximHub",
+    "operatingSystem": "Web",
+    "applicationCategory": "BusinessApplication",
+    "offers": {
+      "@type": "Offer",
+      "price": "25000",
+      "priceCurrency": "INR"
+    },
+    "description": "EximHub is a global trade intelligence platform for verified buyer discovery and market analysis.",
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.8",
+      "ratingCount": "120"
+    }
+  };
+
   return (
     <div className="landing-page">
+      <Helmet>
+        <title>EximHub - Global Buyer Discovery & Trade Intelligence Hub</title>
+        <meta name="description" content="Discover verified buyers, exporters, and market intelligence in one place. EximHub helps you expand your global trade footprint with data-driven insights." />
+        <script type="application/ld+json">
+          {JSON.stringify(schemaMarkup)}
+        </script>
+      </Helmet>
       <div className="orbital-field" aria-hidden="true">
         <span className="orbital-ring ring-one"></span>
         <span className="orbital-ring ring-two"></span>
