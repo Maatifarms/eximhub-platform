@@ -779,9 +779,17 @@ function StoreView({ userData }) {
 
         setPurchasingBookId(book.id);
         try {
-            const res = await paymentApi.createOrder(null, book.id); // null planId, bookId
+            const res = await paymentApi.createOrder(null, book.id);
             if (res.data.success) {
-                const checkout = new window.Cashfree({ mode: import.meta.env.VITE_CASHFREE_MODE || "sandbox" });
+                if (res.data.simulated) {
+                    // Smooth Simulated Success Flow
+                    alert("Proceeding with simulated checkout for preview...");
+                    setTimeout(() => {
+                        window.location.href = `/dashboard?order_id=${res.data.data.order_id}&status=verify`;
+                    }, 1000);
+                    return;
+                }
+                const checkout = new window.Cashfree({ mode: "sandbox" });
                 await checkout.checkout({
                     paymentSessionId: res.data.data.payment_session_id,
                     redirectTarget: "_self"
@@ -789,7 +797,7 @@ function StoreView({ userData }) {
             }
         } catch (e) {
             console.error('Book purchase logic failed', e);
-            alert("Checkout initialization failed. Please try again.");
+            alert("Checkout initialization failed. Please try again later.");
         } finally {
             setPurchasingBookId(null);
         }
