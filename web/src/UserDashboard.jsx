@@ -904,13 +904,19 @@ function StoreView({ userData }) {
         const confirmed = window.confirm(`Proceed to secure checkout for "${book.title}"? (Price: Rs ${book.price})`);
         if (!confirmed) return;
 
+        // Static link for Rs 499 book as provided by user
+        if (book.price === 499 || book.price === '499') {
+            window.open('https://payments.cashfree.com/links?code=ua44am1dp5ag_AAAAAAARrZw', '_blank');
+            alert("Payment link opened in a new tab. Once payment is completed, the book will be added to your library within 2-4 hours.");
+            return;
+        }
+
         setPurchasingBookId(book.id);
         try {
             const res = await paymentApi.createOrder(null, book.id);
             if (res.data.success) {
                 if (res.data.simulated) {
-                    // Smooth Simulated Success Flow
-                    alert("Proceeding with simulated checkout for preview...");
+                    alert("Proceeding with simulated checkout...");
                     setTimeout(() => {
                         window.location.href = `/dashboard?order_id=${res.data.data.order_id}&status=verify`;
                     }, 1000);
@@ -924,7 +930,7 @@ function StoreView({ userData }) {
             }
         } catch (e) {
             console.error('Book purchase logic failed', e);
-            alert("Checkout initialization failed. Please try again later.");
+            alert("Checkout initialization failed.");
         } finally {
             setPurchasingBookId(null);
         }

@@ -44,24 +44,21 @@ const PricingPage = ({ user, onAuthSuccess }) => {
       return;
     }
 
+    const links = {
+        program_1: 'https://payments.cashfree.com/links?code=Ga44apigr5ag_AAAAAAARrZw',
+        program_2: 'https://payments.cashfree.com/links?code=Ua44avhfh5ag_AAAAAAARrZw'
+    };
+
+    if (links[planId]) {
+        window.open(links[planId], '_blank');
+        alert("Payment link opened in a new tab. Once payment is completed, your account will be upgraded within 2-4 hours (or instantly via automated webhook).");
+        return;
+    }
+
     setLoadingPlan(planId);
     try {
-      // 1. Create order on backend
-      const response = await paymentApi.createOrder(planId);
-      if (response.data.success) {
-        const { payment_session_id } = response.data.data;
-
-        // 2. Initialize Cashfree
-        const cashfree = window.Cashfree({
-          mode: import.meta.env.VITE_CASHFREE_ENVIRONMENT === 'PRODUCTION' ? "production" : "sandbox"
-        });
-
-        // 3. Launch Checkout
-        await cashfree.checkout({
-          paymentSessionId: payment_session_id,
-          redirectTarget: "_self", // Or "_modal" for a popup
-        });
-      }
+        // Fallback for others
+        const response = await paymentApi.createOrder(planId);
     } catch (error) {
       alert(error.response?.data?.message || error.message || 'Payment initialization failed');
     } finally {
