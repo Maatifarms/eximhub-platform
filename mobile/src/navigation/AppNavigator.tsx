@@ -147,7 +147,6 @@ export default function AppNavigator() {
       >
         <Drawer.Screen name="Discovery" component={DiscoveryStack} options={{ drawerIcon: ({color, size}) => <Globe color={color} size={size} />, title: 'Buyer Discovery' }} />
         <Drawer.Screen name="Intelligence" component={IntelligenceScreen} options={{ drawerIcon: ({color, size}) => <LineChart color={color} size={size} />, title: 'Market Intelligence' }} />
-        <Drawer.Screen name="AI Assistant" component={AiAssistantScreen} options={{ drawerIcon: ({color, size}) => <Bot color={color} size={size} /> }} />
         <Drawer.Screen name="Trade Library" component={LibraryStack} options={{ drawerIcon: ({color, size}) => <Library color={color} size={size} /> }} />
         <Drawer.Screen name="Learning Hub" component={LearningHubScreen} options={{ drawerIcon: ({color, size}) => <BookOpen color={color} size={size} /> }} />
         

@@ -93,7 +93,12 @@ export default function CompanyDirectory({ setActiveView }) {
                                 </div>
                                 <div className="company-actions">
                                     {company.website ? (
-                                        <a href={company.website} target="_blank" rel="noreferrer" className="btn-visit">
+                                        <a 
+                                            href={company.website.startsWith('http') ? company.website : `https://${company.website}`} 
+                                            target="_blank" 
+                                            rel="noreferrer" 
+                                            className="btn-visit"
+                                        >
                                             <Globe size={14}/> Website
                                         </a>
                                     ) : (

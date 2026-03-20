@@ -7,6 +7,37 @@ import CompanyDirectory from './CompanyDirectory';
 export default function UserDashboard({ user }) {
   const [userData, setUserData] = useState(user);
   const [activeView, setActiveView] = useState('Dashboard');
+  const [revealedContacts, setRevealedContacts] = useState([]);
+
+  // PERSISTENT SEARCH STATE
+  const [searchState, setSearchState] = useState({
+      contacts: [],
+      selectedLead: null,
+      industry: '',
+      country: '',
+      productKeyword: '',
+      companyName: '',
+      companySize: '',
+      limit: 10,
+      loading: false
+  });
+
+  // PERSISTENT MARKET INTELLIGENCE STATE
+  const [marketState, setMarketState] = useState({
+      rows: [],
+      filters: {
+          keyword: '',
+          hsCode: '',
+          country: '',
+          shipperName: '',
+          consigneeName: '',
+          marketSegment: '',
+          port: '',
+          shipmentMode: '',
+          limit: 25,
+      },
+      loading: false
+  });
 
   const fetchBalance = async () => {
     try {
@@ -18,10 +49,20 @@ export default function UserDashboard({ user }) {
       console.error("Balance sync error", e);
     }
   };
-
-  useEffect(() => {
-    setUserData(user);
-    fetchBalance();
+ 
+     const fetchRevealed = async () => {
+         try {
+             const res = await creditsApi.getMyContacts();
+             if (res.data.success) setRevealedContacts(res.data.data || []);
+         } catch (e) {
+             console.error("Revealed fetch error", e);
+         }
+     };
+ 
+     useEffect(() => {
+         setUserData(user);
+         fetchBalance();
+         fetchRevealed();
     
     // Check for payment verification from return URL
     const params = new URLSearchParams(window.location.search);
@@ -70,10 +111,14 @@ export default function UserDashboard({ user }) {
           <NavItem active={activeView === 'Dashboard'} icon={<LayoutDashboard size={20}/>} label="Dashboard" onClick={() => setActiveView('Dashboard')} />
           <NavItem active={activeView === 'Search'} icon={<Search size={20}/>} label="Procurement Discovery" onClick={() => setActiveView('Search')} />
           <NavItem active={activeView === 'Market Intelligence'} icon={<Database size={20}/>} label="Market Intelligence" onClick={() => setActiveView('Market Intelligence')} />
+          <NavItem active={activeView === 'Airlines'} icon={<Truck size={20}/>} label="Carrier Intelligence" onClick={() => setActiveView('Airlines')} />
           <NavItem active={activeView === 'Library'} icon={<Book size={20}/>} label="My Library" onClick={() => setActiveView('Library')} />
+          <NavItem active={activeView === 'CRM'} icon={<Briefcase size={20}/>} label="Pipeline CRM" onClick={() => setActiveView('CRM')} />
           <NavItem active={activeView === 'Directory'} icon={<Building2 size={20}/>} label="Trade Directory" onClick={() => setActiveView('Directory')} />
           <NavItem active={activeView === 'Store'} icon={<CreditCard size={20}/>} label="Digital Store" onClick={() => setActiveView('Store')} />
+          {/* AI Assistant is currently in maintenance, moved to a button if needed */}
           <div className="sidebar-divider"></div>
+          <NavItem active={activeView === 'AI'} icon={<Bot size={20}/>} label="AI Intelligence" onClick={() => setActiveView('AI')} />
           <NavItem active={activeView === 'Profile'} icon={<User size={20}/>} label="Profile" onClick={() => setActiveView('Profile')} />
           <button className="nav-logout" onClick={handleLogout}><LogOut size={20}/> Logout</button>
         </nav>
@@ -113,33 +158,24 @@ export default function UserDashboard({ user }) {
                 </div>
             </section>
             {activeView === 'Dashboard' && <DashboardHome userData={userData} setActiveView={setActiveView} />}
-            {activeView === 'Search' && <GlobalSearchView userData={userData} user={user} refreshUserData={refreshUserData} />}
-            {activeView === 'Market Intelligence' && <MarketIntelligenceView />}
+            {activeView === 'Search' && <GlobalSearchView userData={userData} user={user} refreshUserData={refreshUserData} state={searchState} setState={setSearchState} />}
+            {activeView === 'Market Intelligence' && <MarketIntelligenceView state={marketState} setState={setMarketState} />}
+            {activeView === 'Airlines' && <AirlinesView />}
             {activeView === 'Library' && <LibraryView userData={userData} user={user} />}
+            {activeView === 'CRM' && <CrmView revealedContacts={revealedContacts} />}
             {activeView === 'Directory' && <CompanyDirectory setActiveView={setActiveView} />}
             {activeView === 'Store' && <StoreView userData={userData} />}
             {activeView === 'Profile' && <ProfileView userData={userData} user={user} refreshUserData={refreshUserData} />}
+            {activeView === 'AI' && <AIView userData={userData} />}
         </div>
       </main>
     </div>
   );
 }
 
-function MarketIntelligenceView() {
+function MarketIntelligenceView({ state, setState }) {
     const [overview, setOverview] = useState(null);
-    const [rows, setRows] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [filters, setFilters] = useState({
-        keyword: '',
-        hsCode: '',
-        country: '',
-        shipperName: '',
-        consigneeName: '',
-        marketSegment: '',
-        port: '',
-        shipmentMode: '',
-        limit: 25,
-    });
+    const { rows, filters, loading } = state;
 
     useEffect(() => {
         marketIntelligenceApi.getOverview()
@@ -150,18 +186,18 @@ function MarketIntelligenceView() {
     }, []);
 
     const updateFilter = (key, value) => {
-        setFilters(prev => ({ ...prev, [key]: value }));
+        setState(prev => ({ ...prev, filters: { ...prev.filters, [key]: value } }));
     };
 
     const runSearch = async () => {
-        setLoading(true);
+        setState(prev => ({ ...prev, loading: true }));
         try {
             const res = await marketIntelligenceApi.search(filters);
-            setRows(res.data.data || []);
+            setState(prev => ({ ...prev, rows: res.data.data || [] }));
         } catch (e) {
             alert('Market intelligence search failed: ' + (e.response?.data?.message || e.message));
         } finally {
-            setLoading(false);
+            setState(prev => ({ ...prev, loading: false }));
         }
     };
 
@@ -262,18 +298,18 @@ function MarketIntelligenceView() {
                             </tr>
                         </thead>
                         <tbody>
-                            {rows.map(row => (
-                                <tr key={row.id}>
-                                    <td>{row.product_description}</td>
-                                    <td>{row.hs_code}</td>
-                                    <td>{row.consignee_name}</td>
-                                    <td>{row.shipper_name}</td>
-                                    <td>{row.country_of_destination}</td>
-                                    <td>{row.port_of_origin} to {row.port_of_destination}</td>
-                                    <td>{row.estimated_fob_value_usd || row.quantity_value}</td>
-                                    <td>{row.market_segment}</td>
-                                </tr>
-                            ))}
+                             {rows.map(row => (
+                                 <tr key={row.id}>
+                                     <td>{row.product_description}</td>
+                                     <td><span className="code-badge">{row.hs_code}</span></td>
+                                     <td>{row.consignee_name}</td>
+                                     <td>{row.shipper_name}</td>
+                                     <td>{row.country_of_destination}</td>
+                                     <td>{row.port_of_origin} to {row.port_of_destination}</td>
+                                     <td><span className="status-pill unlocked">USD {row.estimated_fob_value_usd || row.quantity_value}</span></td>
+                                     <td><span className={`status-pill ${row.market_segment === 'high-fit' ? 'unlocked' : 'pending'}`}>{row.market_segment || 'N/A'}</span></td>
+                                 </tr>
+                             ))}
                             {rows.length === 0 && (
                                 <tr>
                                     <td colSpan="8" style={{ textAlign: 'center', padding: '3rem', color: '#64748b' }}>
@@ -348,40 +384,130 @@ function DashboardHome({ userData, setActiveView }) {
             <div className="dashboard-grid">
                 <DashboardCard 
                     title="Trending Products" 
-                    items={analytics?.trendingProducts?.map(p => p.keyword) || ['Bio-Degradable Packaging', 'EV Components', 'Solar Glass']} 
+                    items={analytics?.trendingProducts?.map(p => p.keyword) || (analytics ? [] : ['...', '...', '...'])} 
                     icon={<TrendingUp size={18} className="text-blue-400" />}
                     tone="sky"
+                    onAction={() => setActiveView('Market Intelligence')}
                 />
                 <DashboardCard 
                     title="Top Importers by Country" 
-                    items={analytics?.topCountries?.map(c => `${c.country} (${c.count} Companies)`) || ['Germany', 'USA', 'India']} 
+                    items={analytics?.topCountries?.map(c => `${c.country} (${c.count} Companies)`) || (analytics ? [] : ['...', '...', '...'])} 
                     icon={<Globe size={18} className="text-green-400" />}
                     tone="emerald"
+                    onAction={() => setActiveView('Search')}
                 />
                 <DashboardCard 
                     title="High Demand Industries" 
-                    items={analytics?.topIndustries?.map(i => i.keyword) || ['Food Production', 'Pharmaceuticals', 'Textiles']} 
+                    items={analytics?.topIndustries?.map(i => i.keyword) || (analytics ? [] : ['...', '...', '...'])} 
                     icon={<BarChartIcon size={18} className="text-orange-400" />}
                     tone="amber"
+                    onAction={() => setActiveView('CRM')}
                 />
             </div>
-
-
         </>
     );
 }
 
-function GlobalSearchView({ userData, user, refreshUserData }) {
-    const [contacts, setContacts] = useState([]);
-    const [selectedLead, setSelectedLead] = useState(null);
-    const [industry, setIndustry] = useState('');
-    const [country, setCountry] = useState('');
-    const [productKeyword, setProductKeyword] = useState('');
-    const [companyName, setCompanyName] = useState('');
-    const [companySize, setCompanySize] = useState('');
-    const [limit, setLimit] = useState(10);
-    const [loading, setLoading] = useState(false);
+function CrmView({ revealedContacts }) {
+    return (
+        <div className="crm-view">
+             <div className="welcome-banner">
+                <h2>CRM & Sales Pipeline</h2>
+                <p>Manage your unlocked leads and track outreach progress.</p>
+            </div>
+            <div className="lead-table-container" style={{ marginTop: '2rem' }}>
+                <table className="lead-data-table">
+                    <thead>
+                        <tr>
+                            <th>Contact</th>
+                            <th>Company</th>
+                            <th>Status</th>
+                            <th>Last Activity</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {revealedContacts?.map(c => (
+                            <tr key={c.id}>
+                                <td>
+                                    <strong>{c.full_name}</strong>
+                                    <div className="text-xs text-muted">{c.email}</div>
+                                </td>
+                                <td>{c.company_name}</td>
+                                <td><span className="status-pill unlocked">New Lead</span></td>
+                                <td>Recently Unlocked</td>
+                                <td><button className="view-details-btn">Open Profile</button></td>
+                            </tr>
+                        ))}
+                        {(!revealedContacts || revealedContacts.length === 0) && (
+                            <tr><td colSpan="5" className="text-center py-8 text-muted">No unlocked leads in your pipeline yet. Start discovering in the Search workspace.</td></tr>
+                        )}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+}
+
+function AirlinesView() {
+    const [type, setType] = useState('international');
+    const [query, setQuery] = useState('');
+    const [results, setResults] = useState([]);
+
+    const suggestions = type === 'international' 
+        ? ['Emirates SkyCargo', 'Lufthansa Cargo', 'Qatar Airways', 'Cargolux']
+        : ['IndiGo CarGo', 'Air India Cargo', 'SpiceXpress', 'Blue Dart'];
+
+    const filtered = suggestions.filter(s => s.toLowerCase().includes(query.toLowerCase()));
+
+    return (
+        <div className="airlines-view">
+            <div className="welcome-banner">
+                <h2>Carrier Intelligence</h2>
+                <p>Lookup domestic and international cargo carriers for your trade routes.</p>
+            </div>
+            
+            <div className="apollo-sidebar-rail" style={{ width: '100%', maxWidth: 'none', flexDirection: 'row', gap: '2rem', height: 'auto', padding: '1.5rem', marginBottom: '2rem' }}>
+                <div style={{ flex: 1 }}>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', color: '#94a3b8' }}>Flight Scope</label>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button className={`btn-toggle ${type === 'domestic' ? 'active' : ''}`} onClick={() => setType('domestic')}>Domestic</button>
+                        <button className={`btn-toggle ${type === 'international' ? 'active' : ''}`} onClick={() => setType('international')}>International</button>
+                    </div>
+                </div>
+                <div style={{ flex: 2 }}>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', color: '#94a3b8' }}>Search carrier or route...</label>
+                    <input 
+                        className="apollo-search-input"
+                        value={query}
+                        onChange={e => setQuery(e.target.value)}
+                        placeholder={type === 'international' ? "Search Emirates, Qatar..." : "Search IndiGo, Blue Dart..."}
+                    />
+                </div>
+            </div>
+
+            <div className="discovery-grid">
+                {filtered.map(name => (
+                    <div key={name} className="company-card">
+                        <div className="card-top"><h4>{name}</h4><Truck size={18} color="#3b82f6" /></div>
+                        <p className="company-text">Authorized Cargo Handler</p>
+                        <p className="text-sm text-muted">Active routes: {type === 'international' ? 'Global' : 'PAN India'}</p>
+                        <button className="btn-reveal" style={{ marginTop: '1rem' }} onClick={() => alert(`${name} flight schedule lookup...`)}>View Schedules</button>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+
+function GlobalSearchView({ userData, user, refreshUserData, state, setState }) {
+    const { contacts, selectedLead, industry, country, productKeyword, companyName, companySize, limit, loading } = state;
     const [meta, setMeta] = useState({ countries: [], industries: [] });
+
+    const updateState = (key, value) => {
+        setState(prev => ({ ...prev, [key]: value }));
+    };
 
     useEffect(() => {
         discoveryApi.getMeta().then(res => {
@@ -398,15 +524,15 @@ function GlobalSearchView({ userData, user, refreshUserData }) {
         }
         if (!window.confirm(`Perform procurement discovery search? This will deduct ${limit} points.`)) return;
 
-        setLoading(true);
+        setState(prev => ({ ...prev, loading: true }));
         try {
             const res = await discoveryApi.search(industry, country, productKeyword, companySize, limit, companyName);
-            setContacts(res.data.data || []);
+            setState(prev => ({ ...prev, contacts: res.data.data || [] }));
             if (refreshUserData) await refreshUserData();
         } catch (e) {
             alert("Search failed: " + (e.response?.data?.message || e.message));
         } finally {
-            setLoading(false);
+            setState(prev => ({ ...prev, loading: false }));
         }
     };
 
@@ -417,34 +543,34 @@ function GlobalSearchView({ userData, user, refreshUserData }) {
                 <div className="sidebar-section">
                     <h5 className="sidebar-section-title">Lead Filters</h5>
                     <div className="apollo-filter-list">
-                        <div className="apollo-filter-item">
-                            <label>Industry (Optional)</label>
-                            <select value={industry} onChange={e => setIndustry(e.target.value)}>
-                                <option value="">Select Industry</option>
-                                {meta.industries.map(ind => <option key={ind} value={ind}>{ind}</option>)}
-                            </select>
-                        </div>
-                        <div className="apollo-filter-item">
-                            <label>Country (Optional)</label>
-                            <input list="countries-list" value={country} onChange={e => setCountry(e.target.value)} placeholder="Search country..." />
-                            <datalist id="countries-list">
-                                {meta.countries.map(c => <option key={c} value={c} />)}
-                            </datalist>
-                        </div>
-                        <div className="apollo-filter-item">
-                            <label>Keywords</label>
-                            <input value={productKeyword} onChange={e => setProductKeyword(e.target.value)} placeholder="e.g. Cotton, Sourcing" />
-                        </div>
-                        <div className="apollo-filter-item">
-                            <label>Company</label>
-                            <input value={companyName} onChange={e => setCompanyName(e.target.value)} placeholder="e.g. EximCorp" />
-                        </div>
-                        <div className="apollo-filter-item">
-                            <label>Limit Leads</label>
-                            <select value={limit} onChange={e => setLimit(parseInt(e.target.value))}>
-                                {[10, 20, 50, 100].map(num => <option key={num} value={num}>{num} Leads</option>)}
-                            </select>
-                        </div>
+                         <div className="apollo-filter-item">
+                             <label>Industry (Optional)</label>
+                             <select value={industry} onChange={e => updateState('industry', e.target.value)}>
+                                 <option value="">Select Industry</option>
+                                 {meta.industries.map(ind => <option key={ind} value={ind}>{ind}</option>)}
+                             </select>
+                         </div>
+                         <div className="apollo-filter-item">
+                             <label>Country (Optional)</label>
+                             <input list="countries-list" value={country} onChange={e => updateState('country', e.target.value)} placeholder="Search country..." />
+                             <datalist id="countries-list">
+                                 {meta.countries.map(c => <option key={c} value={c} />)}
+                             </datalist>
+                         </div>
+                         <div className="apollo-filter-item">
+                             <label>Keywords</label>
+                             <input value={productKeyword} onChange={e => updateState('productKeyword', e.target.value)} placeholder="e.g. Cotton, Sourcing" />
+                         </div>
+                         <div className="apollo-filter-item">
+                             <label>Company</label>
+                             <input value={companyName} onChange={e => updateState('companyName', e.target.value)} placeholder="e.g. EximCorp" />
+                         </div>
+                         <div className="apollo-filter-item">
+                             <label>Limit Leads</label>
+                             <select value={limit} onChange={e => updateState('limit', parseInt(e.target.value))}>
+                                 {[10, 20, 50, 100].map(num => <option key={num} value={num}>{num} Leads</option>)}
+                             </select>
+                         </div>
                         <button className="enrich-btn-primary" onClick={handleSearch} disabled={loading} style={{marginTop: '1rem'}}>
                             <Search size={16}/> {loading ? 'Searching...' : 'Search Leads'}
                         </button>
@@ -472,31 +598,31 @@ function GlobalSearchView({ userData, user, refreshUserData }) {
                             </tr>
                         </thead>
                         <tbody>
-                            {contacts.map(lead => (
-                                <tr key={lead.id} onClick={() => setSelectedLead(lead)}>
-                                    <td>
-                                        <div className="lead-name-cell">
-                                            <div className="lead-avatar-sm">{lead.full_name?.charAt(0)}</div>
-                                            <div>
-                                                <div className="lead-name-main">{lead.full_name}</div>
-                                                <div className="lead-title-sub">{lead.title}</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>{lead.company_name}</td>
-                                    <td>{lead.industry}</td>
-                                    <td>
-                                        {lead.email ? (
-                                            <span className="status-pill unlocked"><CheckCircle size={12} style={{marginRight: '4px'}}/> Revealed</span>
-                                        ) : (
-                                            <span className="status-locked"><Shield size={14}/> Locked</span>
-                                        )}
-                                    </td>
-                                    <td>
-                                        <button className="view-details-btn" onClick={() => setSelectedLead(lead)}>View</button>
-                                    </td>
-                                </tr>
-                            ))}
+                         {contacts.map(lead => (
+                                 <tr key={lead.id} onClick={() => updateState('selectedLead', lead)}>
+                                     <td>
+                                         <div className="lead-name-cell">
+                                             <div className="lead-avatar-sm">{lead.full_name?.charAt(0)}</div>
+                                             <div>
+                                                 <div className="lead-name-main">{lead.full_name}</div>
+                                                 <div className="lead-title-sub">{lead.title}</div>
+                                             </div>
+                                         </div>
+                                     </td>
+                                     <td>{lead.company_name}</td>
+                                     <td>{lead.industry}</td>
+                                     <td>
+                                         {lead.email ? (
+                                             <span className="status-pill unlocked"><CheckCircle size={12} style={{marginRight: '4px'}}/> Revealed</span>
+                                         ) : (
+                                             <span className="status-locked"><Shield size={14}/> Locked</span>
+                                         )}
+                                     </td>
+                                     <td>
+                                         <button className="view-details-btn" onClick={() => updateState('selectedLead', lead)}>View</button>
+                                     </td>
+                                 </tr>
+                             ))}
                         {contacts.length === 0 && (
                                 <tr>
                                     <td colSpan="5" style={{textAlign: 'center', padding: '4rem', color: '#64748b'}}>
@@ -517,7 +643,7 @@ function GlobalSearchView({ userData, user, refreshUserData }) {
                             <h3 style={{fontSize: '1.25rem', marginBottom: '4px'}}>{selectedLead.full_name}</h3>
                             <p style={{color: '#64748b', fontSize: '0.875rem'}}>{selectedLead.title} @ {selectedLead.company_name}</p>
                         </div>
-                        <button onClick={() => setSelectedLead(null)} style={{background: 'none', border: 'none', cursor: 'pointer'}}><LogOut size={20} style={{transform: 'rotate(180deg)'}}/></button>
+                        <button onClick={() => updateState('selectedLead', null)} style={{background: 'none', border: 'none', cursor: 'pointer'}}><LogOut size={20} style={{transform: 'rotate(180deg)'}}/></button>
                     </div>
                     <div className="drawer-content">
                         <section className="enrich-section">
@@ -544,15 +670,16 @@ function GlobalSearchView({ userData, user, refreshUserData }) {
                                     <p style={{fontSize: '0.875rem', color: '#64748b', marginBottom: '1rem'}}>Direct contact intelligence is locked.</p>
                                     <button className="enrich-btn-primary" onClick={async () => {
                                         if (!window.confirm(`Reveal contact for 1 point?`)) return;
-                                        try {
-                                            const res = await creditsApi.reveal([selectedLead.id]);
-                                            if (res.data.success) {
-                                                const revealed = res.data.data[0];
-                                                setContacts(prev => prev.map(c => c.id === selectedLead.id ? {...c, ...revealed} : c));
-                                                setSelectedLead({...selectedLead, ...revealed});
-                                                if (refreshUserData) refreshUserData();
-                                            }
-                                        } catch(e) { alert("Failed to reveal lead."); }
+                                         try {
+                                             const res = await creditsApi.reveal([selectedLead.id]);
+                                             if (res.data.success) {
+                                                 const revealed = res.data.data[0];
+                                                 updateState('contacts', contacts.map(c => c.id === selectedLead.id ? {...c, ...revealed} : c));
+                                                 updateState('selectedLead', {...selectedLead, ...revealed});
+                                                 if (refreshUserData) refreshUserData();
+                                                 fetchRevealed(); 
+                                             }
+                                         } catch(e) { alert("Failed to reveal lead."); }
                                     }}>
                                         <Unlock size={16}/> Reveal for 1 Point
                                     </button>
@@ -888,7 +1015,7 @@ function ProfileView({ userData, user, refreshUserData }) {
     );
 }
 
-function DashboardCard({ title, items, icon, tone = 'sky' }) {
+function DashboardCard({ title, items, icon, tone = 'sky', onAction }) {
   return (
     <div className={`summary-card tone-${tone}`}>
       <div className="summary-card-beam"></div>
@@ -897,9 +1024,9 @@ function DashboardCard({ title, items, icon, tone = 'sky' }) {
         <h4>{title}</h4>
       </div>
       <ul className="card-items">
-        {items.map((item, index) => <li key={index}>{item}</li>)}
+        {items.length > 0 ? items.map((item, index) => <li key={index}>{item}</li>) : <li className="text-muted italic">No data available yet</li>}
       </ul>
-      <button className="card-action">View Full Pipeline</button>
+      <button className="card-action" onClick={onAction}>View Full Pipeline</button>
     </div>
   );
 }

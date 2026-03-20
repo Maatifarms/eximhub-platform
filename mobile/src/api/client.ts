@@ -2,9 +2,8 @@ import axios from 'axios';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// 1. Hostinger API Base URL
-// 10.0.2.2 is the alias for localhost on Android emulators
-const BASE_URL = Platform.OS === 'android' ? 'http://10.0.2.2:5000/api' : 'http://localhost:5000/api';
+// 1. Production API Base URL
+const BASE_URL = 'https://api.eximhub.pro/api';
 
 export let currentUserTier = 'Free';
 

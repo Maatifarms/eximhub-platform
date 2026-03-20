@@ -96,6 +96,11 @@ router.post('/verify-order', auth, async (req, res) => {
               await conn.execute('UPDATE payment_orders SET status = ?, transaction_id = ? WHERE id = ?', ['SUCCESS', 'SIM_PAID', order.id]);
               if (order.book_id) {
                 await conn.execute('INSERT IGNORE INTO purchases (user_id, book_id, payment_id) VALUES (?, ?, ?)', [userId, order.book_id, orderId]);
+              } else if (order.plan_id) {
+                const plan = PLAN_CONFIG[order.plan_id];
+                if (plan) {
+                  await conn.execute('UPDATE users SET subscription_tier = ?, points_balance = points_balance + ? WHERE id = ?', [plan.tier, plan.points, userId]);
+                }
               }
               await conn.commit();
               return res.json({ success: true, message: 'Simulated payment successful' });
