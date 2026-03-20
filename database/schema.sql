@@ -187,6 +187,43 @@ CREATE TABLE IF NOT EXISTS contact_inquiries (
     company_name VARCHAR(255),
     interest VARCHAR(150),
     message TEXT NOT NULL,
+    ip_address VARCHAR(100),
+    city VARCHAR(120),
+    region VARCHAR(120),
+    country VARCHAR(120),
+    user_agent TEXT,
+    lead_score INT DEFAULT 0,
+    lead_grade VARCHAR(20),
+    ai_summary VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS website_visits (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    session_id VARCHAR(100),
+    page_path VARCHAR(255),
+    referrer TEXT,
+    utm_source VARCHAR(120),
+    utm_medium VARCHAR(120),
+    utm_campaign VARCHAR(120),
+    visitor_email VARCHAR(255),
+    visitor_name VARCHAR(255),
+    company_name VARCHAR(255),
+    phone VARCHAR(100),
+    country VARCHAR(120),
+    region VARCHAR(120),
+    city VARCHAR(120),
+    ip_address VARCHAR(100),
+    user_agent TEXT,
+    language VARCHAR(80),
+    timezone VARCHAR(120),
+    device_type VARCHAR(80),
+    lead_score INT DEFAULT 0,
+    lead_grade VARCHAR(20),
+    ai_summary VARCHAR(255),
+    ai_intent VARCHAR(120),
+    ai_urgency VARCHAR(50),
+    metadata_json JSON,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

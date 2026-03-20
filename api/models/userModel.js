@@ -36,9 +36,21 @@ async function updatePassword(userId, passwordHash) {
   await db.execute('UPDATE users SET password_hash = ? WHERE id = ?', [passwordHash, userId]);
 }
 
+async function linkGoogleAccount(userId, googleId) {
+  await db.execute('UPDATE users SET google_id = ? WHERE id = ?', [googleId, userId]);
+  return findById(userId);
+}
+
+async function findByGoogleId(googleId) {
+  const [rows] = await db.execute('SELECT * FROM users WHERE google_id = ? LIMIT 1', [googleId]);
+  return rows[0] || null;
+}
+
 module.exports = {
   createUser,
   findByEmail,
+  findByGoogleId,
   findById,
+  linkGoogleAccount,
   updatePassword,
 };

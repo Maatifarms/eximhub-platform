@@ -126,6 +126,11 @@ async function sendContactInquiryNotifications(inquiry) {
       `Phone: ${inquiry.phone || 'N/A'}`,
       `Company: ${inquiry.company_name || 'N/A'}`,
       `Interest: ${inquiry.interest || 'N/A'}`,
+      `Location: ${[inquiry.city, inquiry.region, inquiry.country].filter(Boolean).join(', ') || 'N/A'}`,
+      `IP: ${inquiry.ip_address || 'N/A'}`,
+      `Lead Score: ${inquiry.lead_score ?? 'N/A'}`,
+      `Lead Grade: ${inquiry.lead_grade || 'N/A'}`,
+      `AI Summary: ${inquiry.ai_summary || 'N/A'}`,
       '',
       inquiry.message || '',
     ].join('\n'),
@@ -154,8 +159,35 @@ async function sendContactInquiryNotifications(inquiry) {
   return { adminResult, userResult };
 }
 
+async function sendWebsiteVisitNotification(visit) {
+  const salesEmail = getSalesEmail();
+  return sendMail({
+    from: process.env.SMTP_FROM,
+    to: salesEmail,
+    subject: `Website visitor: ${visit.page_path || '/'} (${visit.lead_grade || 'new'})`,
+    text: [
+      `Page: ${visit.page_path || '/'}`,
+      `Name: ${visit.visitor_name || 'N/A'}`,
+      `Email: ${visit.visitor_email || 'N/A'}`,
+      `Phone: ${visit.phone || 'N/A'}`,
+      `Company: ${visit.company_name || 'N/A'}`,
+      `Location: ${[visit.city, visit.region, visit.country].filter(Boolean).join(', ') || 'N/A'}`,
+      `IP: ${visit.ip_address || 'N/A'}`,
+      `Language: ${visit.language || 'N/A'}`,
+      `Timezone: ${visit.timezone || 'N/A'}`,
+      `Referrer: ${visit.referrer || 'Direct / Unknown'}`,
+      `Lead Score: ${visit.lead_score ?? 'N/A'}`,
+      `Lead Grade: ${visit.lead_grade || 'N/A'}`,
+      `Intent: ${visit.ai_intent || 'N/A'}`,
+      `Urgency: ${visit.ai_urgency || 'N/A'}`,
+      `AI Summary: ${visit.ai_summary || 'N/A'}`,
+    ].join('\n'),
+  });
+}
+
 module.exports = {
   isEmailConfigured,
   sendContactInquiryNotifications,
   sendSignupWelcomeEmail,
+  sendWebsiteVisitNotification,
 };

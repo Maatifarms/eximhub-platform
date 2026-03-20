@@ -1,6 +1,8 @@
 const jwt = require('jsonwebtoken');
 const userModel = require('../models/userModel');
 const bcrypt = require('bcryptjs');
+const { sendSignupWelcomeEmail } = require('../services/emailService');
+const { verifyGoogleIdToken } = require('../services/googleAuthService');
 
 function normalizeEmail(email) {
   return String(email || '').trim().toLowerCase();
@@ -33,10 +35,40 @@ function buildAuthPayload(user) {
 }
 
 async function signup(req, res) {
-  return res.status(403).json({
-    success: false,
-    message: 'Self-signup is disabled. Please contact an admin to create your account.',
-  });
+  try {
+    const { name, email, password } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ success: false, message: 'Name, email, and password are required' });
+    }
+
+    if (String(password).length < 8) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 8 characters' });
+    }
+
+    const existing = await userModel.findByEmail(normalizeEmail(email));
+    if (existing) {
+      return res.status(409).json({ success: false, message: 'An account with this email already exists' });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    const user = await userModel.createUser({
+      name: String(name).trim(),
+      email: normalizeEmail(email),
+      passwordHash,
+      subscriptionTier: 'trial',
+      pointsBalance: 100,
+    });
+
+    sendSignupWelcomeEmail(user).catch((error) => {
+      console.error('SIGNUP_EMAIL_ERROR:', error);
+    });
+
+    return res.status(201).json(buildAuthPayload(user));
+  } catch (error) {
+    console.error('SIGNUP_ERROR:', error);
+    return res.status(500).json({ success: false, message: 'Server error during signup' });
+  }
 }
 
 async function login(req, res) {
@@ -124,16 +156,39 @@ async function googleLogin(req, res) {
       return res.status(400).json({ success: false, message: 'Google token is required' });
     }
 
-    return res.status(501).json({
-      success: false,
-      message: 'Google login is prepared, but token verification/account linking is not implemented yet.',
-      data: {
-        googleTokenPreview: String(googleToken).slice(0, 12),
-      },
-    });
+    const profile = await verifyGoogleIdToken(googleToken);
+
+    let user = await userModel.findByGoogleId(profile.googleId);
+    let created = false;
+
+    if (!user) {
+      user = await userModel.findByEmail(profile.email);
+      if (user) {
+        user = await userModel.linkGoogleAccount(user.id, profile.googleId);
+      }
+    }
+
+    if (!user) {
+      user = await userModel.createUser({
+        name: profile.name,
+        email: profile.email,
+        passwordHash: null,
+        googleId: profile.googleId,
+        subscriptionTier: 'trial',
+      });
+      created = true;
+    }
+
+    if (created) {
+      sendSignupWelcomeEmail(user).catch((error) => {
+        console.error('GOOGLE_SIGNUP_EMAIL_ERROR:', error);
+      });
+    }
+
+    return res.json(buildAuthPayload(user));
   } catch (error) {
     console.error('GOOGLE_LOGIN_ERROR:', error);
-    return res.status(500).json({ success: false, message: 'Server error' });
+    return res.status(400).json({ success: false, message: error.message || 'Google login failed' });
   }
 }
 

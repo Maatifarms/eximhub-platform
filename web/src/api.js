@@ -24,7 +24,7 @@ export const authApi = {
 };
 
 export const discoveryApi = {
-    search: (industry, country, product_keyword, company_size, limit, company_name) => 
+    search: (industry, country, product_keyword, company_size, limit, company_name) =>
         api.post('/discovery/search', { industry, country, product_keyword, company_size, limit, company_name }),
     getDirectory: (params) => api.get('/discovery/directory', { params }),
     getContactById: (id) => api.get(`/discovery/contacts/${id}`),
@@ -59,6 +59,7 @@ export const adminApi = {
 
 export const siteApi = {
     submitContactInquiry: (data) => api.post('/site/contact', data),
+    submitVisit: (data) => api.post('/site/visit', data),
 };
 
 export default api;

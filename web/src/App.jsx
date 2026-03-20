@@ -7,7 +7,7 @@ import {
   useNavigate,
   Link,
 } from 'react-router-dom';
-import { authApi, marketplaceApi } from './api';
+import { authApi, marketplaceApi, siteApi } from './api';
 import Dashboard from './Dashboard';
 import UserDashboard from './UserDashboard';
 import AdminUploadPanel from './AdminUploadPanel';
@@ -157,6 +157,40 @@ function AppContent() {
     setLoading(false);
   }, []);
 
+  useEffect(() => {
+    const sessionKey = `visit:${window.location.pathname}`;
+    if (sessionStorage.getItem(sessionKey)) {
+      return;
+    }
+
+    const sessionId = localStorage.getItem('eximhub_visit_session') || `sess_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    localStorage.setItem('eximhub_visit_session', sessionId);
+
+    const params = new URLSearchParams(window.location.search);
+    const storedUser = localStorage.getItem('exim_user');
+    const parsedUser = storedUser ? JSON.parse(storedUser) : null;
+
+    siteApi.submitVisit({
+      sessionId,
+      pagePath: window.location.pathname,
+      referrer: document.referrer || null,
+      utmSource: params.get('utm_source'),
+      utmMedium: params.get('utm_medium'),
+      utmCampaign: params.get('utm_campaign'),
+      visitorEmail: parsedUser?.email || null,
+      visitorName: parsedUser?.name || null,
+      companyName: parsedUser?.company_name || null,
+      language: navigator.language || null,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || null,
+      deviceType: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop',
+      metadata: {
+        screen: `${window.screen?.width || 0}x${window.screen?.height || 0}`,
+      },
+    }).catch(() => {});
+
+    sessionStorage.setItem(sessionKey, '1');
+  }, []);
+
   if (loading) return <div className="loading">EximHub Trade Intelligence...</div>;
 
   return (
@@ -187,7 +221,75 @@ function AuthUI({ isLogin, onAuthSuccess }) {
   const [resetEmail, setResetEmail] = useState('');
   const [showReset, setShowReset] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
+  const [googleReady, setGoogleReady] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    if (!clientId) return;
+
+    const initGoogle = () => {
+      if (!window.google?.accounts?.id) return;
+
+      window.google.accounts.id.initialize({
+        client_id: clientId,
+        callback: async (response) => {
+          try {
+            setError('');
+            setInfo('');
+            setLoading(true);
+
+            if (!response?.credential) {
+              throw new Error('Google did not return a credential.');
+            }
+
+            const apiResponse = await authApi.googleLogin(response.credential);
+            if (apiResponse.data.success) {
+              const userData = apiResponse.data.data;
+              localStorage.setItem('exim_token', userData.token);
+              localStorage.setItem('exim_user', JSON.stringify(userData));
+              onAuthSuccess(userData);
+              navigate('/dashboard');
+            }
+          } catch (err) {
+            setError(err.response?.data?.message || err.message || 'Google login failed');
+          } finally {
+            setLoading(false);
+          }
+        },
+      });
+
+      const container = document.getElementById('google-signin-button');
+      if (container) {
+        container.innerHTML = '';
+        window.google.accounts.id.renderButton(container, {
+          theme: 'outline',
+          size: 'large',
+          shape: 'pill',
+          text: 'continue_with',
+          width: 320,
+        });
+      }
+
+      setGoogleReady(true);
+    };
+
+    if (window.google?.accounts?.id) {
+      initGoogle();
+      return;
+    }
+
+    const existing = document.querySelector('script[data-google-identity="true"]');
+    if (existing) return;
+
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.dataset.googleIdentity = 'true';
+    script.onload = initGoogle;
+    document.body.appendChild(script);
+  }, [navigate, onAuthSuccess]);
 
   const handleEmailAuth = async (event) => {
     event.preventDefault();
@@ -206,15 +308,11 @@ function AuthUI({ isLogin, onAuthSuccess }) {
         onAuthSuccess(userData);
         navigate('/dashboard');
       }
-    } catch (error) {
-      setError(error.response?.data?.message || error.message || 'Authentication failed');
+    } catch (authError) {
+      setError(authError.response?.data?.message || authError.message || 'Authentication failed');
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleGoogleLogin = async () => {
-    setInfo('Google login is coming soon. Please use email login for now.');
   };
 
   const handleResetPassword = async () => {
@@ -231,8 +329,8 @@ function AuthUI({ isLogin, onAuthSuccess }) {
       const response = await authApi.resetPassword(targetEmail);
       setInfo(response.data?.message || 'Password reset request submitted.');
       setShowReset(false);
-    } catch (error) {
-      setError(error.response?.data?.message || error.message || 'Could not process password reset');
+    } catch (resetError) {
+      setError(resetError.response?.data?.message || resetError.message || 'Could not process password reset');
     } finally {
       setResetLoading(false);
     }
@@ -245,15 +343,22 @@ function AuthUI({ isLogin, onAuthSuccess }) {
         <p className="text-muted" style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
           {isLogin ? 'Pick up your buyer discovery workflow where you left off.' : 'Create your account and start exploring trade-ready buyer opportunities.'}
         </p>
-        <div className="auth-methods">
-          <button className="btn-social" onClick={handleGoogleLogin}>
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/layout/google.svg" width="18" alt="G" />
-            Continue with Google
-          </button>
+
+        <div className="auth-methods" style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+          <div id="google-signin-button" />
         </div>
+
+        {!googleReady && (
+          <p style={{ color: '#94a3b8', marginBottom: '0.75rem', textAlign: 'center' }}>
+            Loading Google sign-in...
+          </p>
+        )}
+
         {error && <p style={{ color: '#ef4444', marginBottom: '0.75rem', textAlign: 'center' }}>{error}</p>}
         {info && <p style={{ color: '#22c55e', marginBottom: '0.75rem', textAlign: 'center' }}>{info}</p>}
+
         <div className="divider">or use email</div>
+
         <form onSubmit={handleEmailAuth}>
           {!isLogin && (
             <div className="input-group">
@@ -269,6 +374,7 @@ function AuthUI({ isLogin, onAuthSuccess }) {
             <label>Password</label>
             <input type="password" minLength={8} value={password} onChange={(event) => setPassword(event.target.value)} required />
           </div>
+
           {isLogin && (
             <p style={{ marginTop: '-0.5rem', marginBottom: '1rem', textAlign: 'right' }}>
               <button
@@ -280,6 +386,7 @@ function AuthUI({ isLogin, onAuthSuccess }) {
               </button>
             </p>
           )}
+
           {showReset && (
             <div className="input-group">
               <label>Reset Email</label>
@@ -295,26 +402,33 @@ function AuthUI({ isLogin, onAuthSuccess }) {
               </button>
             </div>
           )}
+
           <button type="submit" className="login-button">
             {loading ? 'Please wait...' : isLogin ? 'Login to Dashboard' : 'Create Account'}
           </button>
         </form>
+
         <p style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-          {isLogin ? "Need an account?" : 'Already have an account?'}
+          {isLogin ? 'Need an account?' : 'Already have an account?'}
           <Link to={isLogin ? '/contact' : '/login'} style={{ color: 'var(--accent-primary)', marginLeft: '0.5rem' }}>
             {isLogin ? 'Request access' : 'Login'}
           </Link>
         </p>
+
         <div className="auth-support-row">
           <a href={`mailto:${primaryContact.email}`}>{primaryContact.email}</a>
           <a href={`tel:${primaryContact.phone.replace(/\s+/g, '')}`}>{primaryContact.phone}</a>
           <Link to="/contact">Contact Us</Link>
         </div>
+
         <div className="auth-legal-row">
           <Link to="/privacy">Privacy Policy</Link>
           <Link to="/refund-policy">Refund Policy</Link>
         </div>
-        <Link to="/" className="btn-logout" style={{ display: 'block', textAlign: 'center', marginTop: '1rem', textDecoration: 'none' }}>Back to Home</Link>
+
+        <Link to="/" className="btn-logout" style={{ display: 'block', textAlign: 'center', marginTop: '1rem', textDecoration: 'none' }}>
+          Back to Home
+        </Link>
       </div>
     </div>
   );

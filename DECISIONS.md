@@ -23,12 +23,16 @@ This file records decisions that should not depend on chat memory.
 - Authentication uses JWT and bcrypt.
 - Market intelligence is stored and queried separately from contacts.
 - SQL export/import workflows are kept in the repository to improve reproducibility.
+- Production nginx currently fronts both the web app and API under `eximhub.pro`; the API base path is `https://eximhub.pro/api`.
+- Production proxying for `/api/` must preserve the `/api` prefix when forwarding to Express, so nginx uses `proxy_pass http://127.0.0.1:5000;` without a trailing slash.
+- Production database name is `eximhub_db`.
 
 ## Team Process Decisions
 
 - Repository docs are the source of truth for ongoing work.
 - AI tools should not rely on session memory for important project context.
 - Work should be handed off with clear notes when unfinished.
+- If production access details or deployment topology are discovered during troubleshooting, they must be written into repository docs before ending the session.
 
 ## Open Decisions
 
