@@ -338,6 +338,14 @@ async function setup() {
       "UPDATE users SET role = CASE WHEN subscription_tier = 'Admin' THEN 'admin' ELSE 'user' END"
     );
 
+    await ensureColumn(
+      connection,
+      dbName,
+      'payment_orders',
+      'book_id',
+      "INT AFTER plan_id"
+    );
+
     await ensureTextColumn(connection, dbName, 'companies', 'website');
     await ensureTextColumn(connection, dbName, 'contact_inquiries', 'user_agent');
 
