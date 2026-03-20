@@ -78,7 +78,7 @@ router.post('/search', auth, async (req, res) => {
     sql += ' ORDER BY shipment_date DESC, id DESC LIMIT ?';
     params.push(Math.min(parseInt(limit, 10) || 25, 100));
 
-    const [rows] = await db.execute(sql, params);
+    const [rows] = await db.query(sql, params);
     res.json({ success: true, data: rows });
   } catch (error) {
     console.error('MARKET_INTELLIGENCE_SEARCH_ERROR:', error);

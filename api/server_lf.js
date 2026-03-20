@@ -7,11 +7,11 @@ const { ensureRuntimeSchema } = require('./services/runtimeschemaservice');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ✅ Middleware
+// âœ… Middleware
 app.use(cors());
 app.use(express.json());
 
-// ✅ Helper response
+// âœ… Helper response
 const response = (res, success, message, data = null) => {
   return res.status(success ? 200 : 400).json({
     success,
@@ -20,7 +20,7 @@ const response = (res, success, message, data = null) => {
   });
 };
 
-// ✅ Health Check
+// âœ… Health Check
 app.get('/api/health', (req, res) => {
   return response(res, true, 'EximHub API is running');
 });
@@ -29,7 +29,7 @@ app.get('/', (req, res) => {
   res.send('EximHub API Root Working');
 });
 
-// ✅ Import Routes
+// âœ… Import Routes
 const authRoutes = require('./routes/auth');
 const discoveryRoutes = require('./routes/discovery');
 const creditRoutes = require('./routes/credits');
@@ -39,7 +39,7 @@ const marketIntelligenceRoutes = require('./routes/marketintelligence');
 const siteRoutes = require('./routes/site');
 const paymentRoutes = require('./routes/payments');
 
-// ✅ Register Routes
+// âœ… Register Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/discovery', discoveryRoutes);
 app.use('/api/credits', creditRoutes);
@@ -49,7 +49,7 @@ app.use('/api/market-intelligence', marketIntelligenceRoutes);
 app.use('/api/site', siteRoutes);
 app.use('/api/payments', paymentRoutes);
 
-// ❌ 404 Handler
+// âŒ 404 Handler
 app.use((req, res) => {
   return res.status(404).json({
     success: false,
@@ -57,7 +57,7 @@ app.use((req, res) => {
   });
 });
 
-// ❌ Global Error Handler
+// âŒ Global Error Handler
 app.use((err, req, res, next) => {
   console.error('UNHANDLED_ERROR:', err);
   return res.status(500).json({
@@ -66,11 +66,11 @@ app.use((err, req, res, next) => {
   });
 });
 
-// ✅ Start Server AFTER schema ready
+// âœ… Start Server AFTER schema ready
 ensureRuntimeSchema()
   .then(() => {
     app.listen(PORT, () => {
-      console.log(`🚀 EximHub Server running on port ${PORT}`);
+      console.log(`ðŸš€ EximHub Server running on port ${PORT}`);
     });
   })
   .catch((error) => {

@@ -13,38 +13,45 @@ router.post('/reveal', auth, async (req, res) => {
     }
 
     try {
-        const count = contactIds.length;
+        // 1. Filter out already revealed contacts
+        const [alreadyRevealed] = await db.execute(
+            'SELECT contact_id FROM reveals WHERE user_id = ? AND contact_id IN (?)',
+            [userId, contactIds]
+        );
+        const alreadyRevealedIds = alreadyRevealed.map(r => r.contact_id);
+        const newContactIds = contactIds.filter(id => !alreadyRevealedIds.includes(id));
 
-        // 1. Check Daily Limit (50/day)
+        if (newContactIds.length === 0) {
+            // Already revealed all, just return them
+            const [contacts] = await db.query('SELECT * FROM contacts WHERE id IN (?)', [contactIds]);
+            return res.json({ success: true, message: "Already revealed", data: contacts });
+        }
+
+        const count = newContactIds.length;
+
+        // 2. Check Daily Limit (50/day)
         const [dailyCount] = await db.execute(
             'SELECT COUNT(*) as count FROM reveals WHERE user_id = ? AND DATE(revealed_at) = CURDATE()',
             [userId]
         );
         if (dailyCount[0].count + count > 50) {
-            // Log High Severity Abuse Attempt
-            await db.execute(
-                'INSERT INTO security_logs (user_id, action, details, severity) VALUES (?, ?, ?, ?)',
-                [userId, 'REVEAL_LIMIT_EXCEEDED', `Attempted to reveal ${count} contacts. Daily total would be ${dailyCount[0].count + count}`, 'high']
-            );
             return res.status(403).json({ success: false, message: `Action would exceed daily reveal limit (50). Remaining: ${50 - dailyCount[0].count}` });
         }
 
-        // 2. Check Points
+        // 3. Check Points
         const [users] = await db.execute('SELECT points_balance FROM users WHERE id = ?', [userId]);
         if (users[0].points_balance < count) {
             return res.status(402).json({ success: false, message: `Insufficient points. ${count} points required.` });
         }
 
-        // 3. Start Transaction for Atomic Reveal
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
 
-            // Deduct total points
+            // Deduct points only for NEW reveals
             await conn.execute('UPDATE users SET points_balance = points_balance - ? WHERE id = ?', [count, userId]);
 
-            // Insert reveal records (Ignore if already revealed)
-            for (const contactId of contactIds) {
+            for (const contactId of newContactIds) {
                 await conn.execute(
                     'INSERT IGNORE INTO reveals (user_id, contact_id, points_used) VALUES (?, ?, 1)',
                     [userId, contactId]
@@ -53,13 +60,8 @@ router.post('/reveal', auth, async (req, res) => {
 
             await conn.commit();
 
-            // Fetch the full contact data for the revealed IDs
-            const [revealedContacts] = await conn.query(
-                'SELECT * FROM contacts WHERE id IN (?)',
-                [contactIds]
-            );
-
-            res.json({ success: true, message: `${count} contacts revealed`, data: revealedContacts });
+            const [revealedContacts] = await conn.query('SELECT * FROM contacts WHERE id IN (?)', [contactIds]);
+            res.json({ success: true, message: `${count} new contacts revealed`, data: revealedContacts });
         } catch (err) {
             await conn.rollback();
             throw err;
@@ -68,7 +70,7 @@ router.post('/reveal', auth, async (req, res) => {
         }
     } catch (e) {
         console.error('REVEAL ERROR:', e);
-        res.status(500).json({ success: false, message: "Server error during reveal", error: e.message });
+        res.status(500).json({ success: false, message: "Server error during reveal" });
     }
 });
 
@@ -91,8 +93,8 @@ router.get('/my-contacts', auth, async (req, res) => {
                 c.*, co.company_name, co.industry as company_industry, co.website, co.company_size,
                 r.revealed_at 
             FROM reveals r
-            JOIN contacts c ON r.contact_id = c.id
-            JOIN companies co ON c.company_id = co.id
+            LEFT JOIN contacts c ON r.contact_id = c.id
+            LEFT JOIN companies co ON c.company_id = co.id
             WHERE r.user_id = ?
             ORDER BY r.revealed_at DESC
         `, [userId]);

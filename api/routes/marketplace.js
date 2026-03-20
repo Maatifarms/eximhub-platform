@@ -167,29 +167,4 @@ router.get('/books/:bookId/download', auth, async (req, res) => {
   }
 });
 
-router.post('/upgrade', auth, async (req, res) => {
-  const { planId } = req.body;
-  const userId = req.user.id;
-
-  const plans = {
-    program_1: { tier: 'Program 1', points: 500 },
-    program_2: { tier: 'Program 2', points: 1200 },
-    enterprise: { tier: 'Enterprise', points: 10000 },
-  };
-
-  const plan = plans[planId];
-  if (!plan) return res.status(400).json({ success: false, message: 'Invalid plan' });
-
-  try {
-    await db.execute(
-      'UPDATE users SET subscription_tier = ?, points_balance = points_balance + ? WHERE id = ?',
-      [plan.tier, plan.points, userId]
-    );
-    res.json({ success: true, message: `Upgraded to ${plan.tier}. ${plan.points} points added.` });
-  } catch (error) {
-    console.error('UPGRADE_ERROR:', error);
-    res.status(500).json({ success: false, message: 'Failed to upgrade plan' });
-  }
-});
-
 module.exports = router;

@@ -28,6 +28,7 @@ export const discoveryApi = {
         api.post('/discovery/search', { industry, country, product_keyword, company_size, limit, company_name }),
     getDirectory: (params) => api.get('/discovery/directory', { params }),
     getContactById: (id) => api.get(`/discovery/contacts/${id}`),
+    getMeta: () => api.get('/discovery/meta'),
     getTrends: () => api.get('/discovery/trends'),
     getAnalytics: () => api.get('/discovery/analytics'),
 };
@@ -48,7 +49,11 @@ export const marketplaceApi = {
     buyBook: (bookId, paymentId) => api.post('/marketplace/buy-book', { bookId, paymentId }),
     getLibrary: () => api.get('/marketplace/library'),
     downloadBook: (bookId) => api.get(`/marketplace/books/${bookId}/download`, { responseType: 'blob' }),
-    upgrade: (planId, paymentId) => api.post('/marketplace/upgrade', { planId, paymentId }),
+};
+
+export const paymentApi = {
+    createOrder: (planId, bookId) => api.post('/payments/create-order', { planId, bookId }),
+    verifyOrder: (orderId) => api.post('/payments/verify-order', { orderId }),
 };
 
 export const adminApi = {

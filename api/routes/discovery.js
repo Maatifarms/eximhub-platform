@@ -3,6 +3,23 @@ const router = express.Router();
 const db = require('../db');
 const auth = require('../middleware/auth');
 
+router.get('/meta', async (req, res) => {
+    try {
+        const [countries] = await db.query('SELECT DISTINCT country FROM companies WHERE country IS NOT NULL AND country != "" ORDER BY country ASC');
+        const [industries] = await db.query('SELECT DISTINCT industry FROM companies WHERE industry IS NOT NULL AND industry != "" ORDER BY industry ASC');
+        res.json({
+            success: true,
+            data: {
+                countries: countries.map(c => c.country),
+                industries: industries.map(i => i.industry)
+            }
+        });
+    } catch (e) {
+        console.error('META_ERROR:', e);
+        res.status(500).json({ success: false, message: 'Failed to fetch meta' });
+    }
+});
+
 router.get('/directory', auth, async (req, res) => {
     const query = String(req.query.query || '').trim();
     const industry = String(req.query.industry || '').trim();

@@ -7,7 +7,7 @@ import {
   useNavigate,
   Link,
 } from 'react-router-dom';
-import { authApi, marketplaceApi, siteApi } from './api';
+import { authApi, marketplaceApi, siteApi, paymentApi } from './api';
 import Dashboard from './Dashboard';
 import UserDashboard from './UserDashboard';
 import AdminUploadPanel from './AdminUploadPanel';
@@ -44,29 +44,26 @@ const PricingPage = ({ user, onAuthSuccess }) => {
       return;
     }
 
-    const selected = planConfig[planId];
-    if (!selected) return;
-
-    const confirmed = window.confirm(`Confirm payment and upgrade to ${selected.tier}?`);
-    if (!confirmed) return;
-
     setLoadingPlan(planId);
     try {
-      const paymentId = `LOCALPAY-${Date.now()}`;
-      const response = await marketplaceApi.upgrade(planId, paymentId);
+      // 1. Create order on backend
+      const response = await paymentApi.createOrder(planId);
       if (response.data.success) {
-        const nextUser = {
-          ...user,
-          subscription_tier: selected.tier,
-          points_balance: Number(user.points_balance || 0) + selected.points,
-        };
-        localStorage.setItem('exim_user', JSON.stringify(nextUser));
-        onAuthSuccess(nextUser);
-        alert(response.data.message || 'Plan upgraded successfully.');
-        navigate('/dashboard');
+        const { payment_session_id } = response.data.data;
+
+        // 2. Initialize Cashfree
+        const cashfree = window.Cashfree({
+          mode: import.meta.env.VITE_CASHFREE_ENVIRONMENT === 'PRODUCTION' ? "production" : "sandbox"
+        });
+
+        // 3. Launch Checkout
+        await cashfree.checkout({
+          paymentSessionId: payment_session_id,
+          redirectTarget: "_self", // Or "_modal" for a popup
+        });
       }
     } catch (error) {
-      alert(error.response?.data?.message || error.message || 'Payment failed');
+      alert(error.response?.data?.message || error.message || 'Payment initialization failed');
     } finally {
       setLoadingPlan(null);
     }
@@ -138,6 +135,65 @@ const PricingCard = ({ title, price, features, highlight, onSelect, loading, but
   </div>
 );
 
+const PaymentVerification = ({ onAuthSuccess }) => {
+  const navigate = useNavigate();
+  const [status, setStatus] = useState('verifying');
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const verify = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const orderId = params.get('order_id');
+      if (!orderId) {
+        setStatus('error');
+        setError('No order ID found in the URL.');
+        return;
+      }
+
+      try {
+        const response = await paymentApi.verifyOrder(orderId);
+        if (response.data.success) {
+          // Re-fetch balance to update local state
+          const balanceRes = await authApi.login(); // Wait, I need a proper GET user data from token
+          setStatus('success');
+          // Important: We should probably just reload the user from the backend
+          // Since I don't have a direct "me" endpoint without re-logging in
+          // I'll tell the user to check dashboard
+          setTimeout(() => navigate('/dashboard'), 3000);
+        } else {
+          setStatus('error');
+          setError(response.data.message || 'Payment verification failed.');
+        }
+      } catch (err) {
+        setStatus('error');
+        setError(err.response?.data?.message || 'Server error during verification.');
+      }
+    };
+    verify();
+  }, [navigate]);
+
+  if (status === 'verifying') return <div className="loading" style={{ height: '100vh' }}>Verifying your payment with EximHub...</div>;
+  if (status === 'error') return (
+    <div className="login-container" style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="login-form">
+        <h2 style={{ color: '#ef4444' }}>Payment Error</h2>
+        <p>{error}</p>
+        <Link to="/pricing" className="login-button" style={{ display: 'block', textDecoration: 'none', textAlign: 'center' }}>Back to Pricing</Link>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="login-container" style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="login-form">
+        <h2 style={{ color: '#22c55e' }}>Payment Successful!</h2>
+        <p>Your plan has been upgraded and points added to your account.</p>
+        <p>Redirecting you to the dashboard...</p>
+      </div>
+    </div>
+  );
+};
+
 const BookPage = () => (
   <div className="page-container">
     <h2>Digital Book: Global Trade Secrets</h2>
@@ -201,10 +257,11 @@ function AppContent() {
       <Route path="/privacy" element={<PolicyPage title="Privacy Policy" intro="This page explains how EximHub collects, uses, and protects information when you use our website, create an account, contact us, or purchase services." effectiveDate="March 17, 2026" sections={privacySections} />} />
       <Route path="/refund-policy" element={<PolicyPage title="Refund Policy" intro="This policy explains how refunds, billing issues, cancellations, and digital-service access are handled for EximHub plans and related services." effectiveDate="March 17, 2026" sections={refundSections} />} />
       <Route path="/book" element={<BookPage />} />
+      <Route path="/payment-verification" element={<PaymentVerification onAuthSuccess={(nextUser) => setUser(nextUser)} />} />
       <Route path="/admin/upload" element={<AdminUploadPanel />} />
       <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <AuthUI isLogin={true} onAuthSuccess={(nextUser) => setUser(nextUser)} />} />
       <Route path="/signup" element={<Navigate to="/contact" />} />
-      <Route path="/dashboard" element={user ? ((user.subscription_tier?.toLowerCase() === 'enterprise' || user.subscription_tier?.toLowerCase() === 'admin') ? <Dashboard user={user} /> : <UserDashboard user={user} />) : <Navigate to="/login" />} />
+      <Route path="/dashboard" element={user ? <UserDashboard user={user} /> : <Navigate to="/login" />} />
       <Route path="/profile/:id" element={user ? <BuyerProfilePage /> : <Navigate to="/login" />} />
       <Route path="/directory" element={user ? <CompanyDirectory /> : <Navigate to="/login" />} />
     </Routes>

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { discoveryApi } from './api';
 import { Building2, Globe, Search, Briefcase, MapPin, Users } from 'lucide-react';
 
-export default function CompanyDirectory() {
+export default function CompanyDirectory({ setActiveView }) {
     const navigate = useNavigate();
     const [companies, setCompanies] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -104,7 +104,7 @@ export default function CompanyDirectory() {
                                     <button
                                         type="button"
                                         className="btn-view-leads"
-                                        onClick={() => navigate('/dashboard')}
+                                        onClick={() => setActiveView('Search')}
                                     >
                                         Open Search Workspace
                                     </button>

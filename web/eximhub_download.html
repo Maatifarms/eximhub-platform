@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EximHub App Download</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f1f5f9; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .card { background: white; padding: 2.5rem; border-radius: 16px; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); text-align: center; max-width: 400px; width: 90%; }
+        h1 { color: #0f172a; margin-top: 0; font-size: 1.5rem; }
+        .version-box { background: #f8fafc; padding: 1.25rem; border-radius: 8px; margin: 1.5rem 0; border: 1px solid #e2e8f0; }
+        .version-num { font-size: 1.25rem; font-weight: bold; color: #0284c7; }
+        .date { color: #64748b; font-size: 0.875rem; margin-top: 0.25rem; }
+        .notes { color: #475569; margin-top: 1rem; font-size: 0.95rem; line-height: 1.4; }
+        .download-btn { display: inline-block; background: #0f172a; color: white; text-decoration: none; padding: 0.875rem 1.5rem; border-radius: 8px; font-weight: bold; width: 100%; box-sizing: border-box; transition: background-color 0.2s; }
+        .download-btn:hover { background: #1e293b; }
+        .loading { opacity: 0.6; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1 id="appName">EximHub Mobile App</h1>
+        <p style="color: #64748b; font-size: 0.95rem;">Official Beta Distribution Point</p>
+        
+        <div class="version-box">
+            <div class="version-num loading" id="versionNum">Loading version info...</div>
+            <div class="date" id="buildDate"></div>
+            <div class="notes" id="releaseNotes"></div>
+        </div>
+
+        <a href="/eximhub-builds/latest/eximhub.apk" download id="downloadBtn" class="download-btn">Download APK</a>
+    </div>
+
+    <script>
+        fetch('/eximhub-version.json')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('appName').textContent = data.app_name || 'EximHub';
+                const vn = document.getElementById('versionNum');
+                vn.textContent = 'Version ' + data.version;
+                vn.classList.remove('loading');
+                document.getElementById('buildDate').textContent = 'Build Date: ' + data.build_date;
+                document.getElementById('releaseNotes').textContent = data.release_notes || 'Initial release';
+            })
+            .catch(error => {
+                document.getElementById('versionNum').textContent = 'Version Data Unavailable';
+                console.error('Error fetching version:', error);
+            });
+    </script>
+</body>
+</html>

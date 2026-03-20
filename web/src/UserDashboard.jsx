@@ -22,6 +22,32 @@ export default function UserDashboard({ user }) {
   useEffect(() => {
     setUserData(user);
     fetchBalance();
+    
+    // Check for payment verification from return URL
+    const params = new URLSearchParams(window.location.search);
+    const orderId = params.get('order_id');
+    const status = params.get('status');
+    
+    if (orderId && status === 'verify') {
+      const verifyPayment = async () => {
+        try {
+            const res = await paymentApi.verifyOrder(orderId);
+            if (res.data.success) {
+                alert(res.data.message || "Payment verified successfully!");
+                // Clear URL params
+                window.history.replaceState({}, document.title, window.location.pathname);
+                fetchBalance();
+                if (activeView === 'Store') setActiveView('Library');
+            } else {
+                alert("Payment verification failed or pending.");
+            }
+        } catch (e) {
+            console.error("Verification error", e);
+        }
+      };
+      verifyPayment();
+    }
+
     const interval = setInterval(fetchBalance, 30000); // 30s sync
     return () => clearInterval(interval);
   }, [user]);
@@ -44,7 +70,6 @@ export default function UserDashboard({ user }) {
           <NavItem active={activeView === 'Dashboard'} icon={<LayoutDashboard size={20}/>} label="Dashboard" onClick={() => setActiveView('Dashboard')} />
           <NavItem active={activeView === 'Search'} icon={<Search size={20}/>} label="Procurement Discovery" onClick={() => setActiveView('Search')} />
           <NavItem active={activeView === 'Market Intelligence'} icon={<Database size={20}/>} label="Market Intelligence" onClick={() => setActiveView('Market Intelligence')} />
-          <NavItem active={activeView === 'AI'} icon={<Cpu size={20}/>} label="EximHub AI" onClick={() => setActiveView('AI')} />
           <NavItem active={activeView === 'Library'} icon={<Book size={20}/>} label="My Library" onClick={() => setActiveView('Library')} />
           <NavItem active={activeView === 'Directory'} icon={<Building2 size={20}/>} label="Trade Directory" onClick={() => setActiveView('Directory')} />
           <NavItem active={activeView === 'Store'} icon={<CreditCard size={20}/>} label="Digital Store" onClick={() => setActiveView('Store')} />
@@ -90,9 +115,8 @@ export default function UserDashboard({ user }) {
             {activeView === 'Dashboard' && <DashboardHome userData={userData} setActiveView={setActiveView} />}
             {activeView === 'Search' && <GlobalSearchView userData={userData} user={user} refreshUserData={refreshUserData} />}
             {activeView === 'Market Intelligence' && <MarketIntelligenceView />}
-            {activeView === 'AI' && <AIView userData={userData} />}
             {activeView === 'Library' && <LibraryView userData={userData} user={user} />}
-            {activeView === 'Directory' && <CompanyDirectory />}
+            {activeView === 'Directory' && <CompanyDirectory setActiveView={setActiveView} />}
             {activeView === 'Store' && <StoreView userData={userData} />}
             {activeView === 'Profile' && <ProfileView userData={userData} user={user} refreshUserData={refreshUserData} />}
         </div>
@@ -342,14 +366,7 @@ function DashboardHome({ userData, setActiveView }) {
                 />
             </div>
 
-            <section className="ai-cta-card">
-                <div className="ai-cta-content">
-                    <h3>Ask EximHub AI</h3>
-                    <p>Get instant answers on who imports dairy in Philippines or how to source strategic minerals.</p>
-                    <button className="btn-ai-portal" onClick={() => setActiveView('AI')}>Open AI Assistant</button>
-                </div>
-                <Cpu size={48} className="ai-icon-bg" />
-            </section>
+
         </>
     );
 }
@@ -357,16 +374,22 @@ function DashboardHome({ userData, setActiveView }) {
 function GlobalSearchView({ userData, user, refreshUserData }) {
     const [contacts, setContacts] = useState([]);
     const [selectedLead, setSelectedLead] = useState(null);
-    const [industry, setIndustry] = useState('Food Production');
-    const [country, setCountry] = useState('Germany');
+    const [industry, setIndustry] = useState('');
+    const [country, setCountry] = useState('');
     const [productKeyword, setProductKeyword] = useState('');
     const [companyName, setCompanyName] = useState('');
     const [companySize, setCompanySize] = useState('');
     const [limit, setLimit] = useState(10);
     const [loading, setLoading] = useState(false);
+    const [meta, setMeta] = useState({ countries: [], industries: [] });
 
-    const industries = ["Manufacturing", "Food Production", "Pharmaceuticals", "Automotive", "Textiles", "Electronics", "Agriculture", "Logistics", "Construction", "Energy"];
-    const countries = ["Germany", "India", "USA", "Vietnam", "Brazil"];
+    useEffect(() => {
+        discoveryApi.getMeta().then(res => {
+            if (res.data.success) {
+                setMeta(res.data.data);
+            }
+        });
+    }, []);
 
     const handleSearch = async () => {
         if ((userData?.points_balance || 0) < limit) {
@@ -395,16 +418,18 @@ function GlobalSearchView({ userData, user, refreshUserData }) {
                     <h5 className="sidebar-section-title">Lead Filters</h5>
                     <div className="apollo-filter-list">
                         <div className="apollo-filter-item">
-                            <label>Industry</label>
+                            <label>Industry (Optional)</label>
                             <select value={industry} onChange={e => setIndustry(e.target.value)}>
-                                {industries.map(ind => <option key={ind} value={ind}>{ind}</option>)}
+                                <option value="">Select Industry</option>
+                                {meta.industries.map(ind => <option key={ind} value={ind}>{ind}</option>)}
                             </select>
                         </div>
                         <div className="apollo-filter-item">
-                            <label>Country</label>
-                            <select value={country} onChange={e => setCountry(e.target.value)}>
-                                {countries.map(c => <option key={c} value={c}>{c}</option>)}
-                            </select>
+                            <label>Country (Optional)</label>
+                            <input list="countries-list" value={country} onChange={e => setCountry(e.target.value)} placeholder="Search country..." />
+                            <datalist id="countries-list">
+                                {meta.countries.map(c => <option key={c} value={c} />)}
+                            </datalist>
                         </div>
                         <div className="apollo-filter-item">
                             <label>Keywords</label>
@@ -608,6 +633,34 @@ function LibraryView({ userData }) {
     const [revealedContacts, setRevealedContacts] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    const downloadLeads = () => {
+        if (revealedContacts.length === 0) return;
+        
+        const headers = ["Full Name", "Title", "Email", "Phone", "LinkedIn", "Company", "Industry", "Country", "Website", "Date Unlocked"];
+        const rows = revealedContacts.map(c => [
+            c.full_name,
+            c.title,
+            c.email,
+            c.phone || '',
+            c.linkedin || '',
+            c.company_name,
+            c.company_industry || c.industry,
+            c.country,
+            c.website || '',
+            new Date(c.revealed_at).toLocaleDateString()
+        ]);
+
+        const csvContent = [headers, ...rows].map(e => e.map(String).map(s => `"${s.replace(/"/g, '""')}"`).join(",")).join("\n");
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `unlocked_leads_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     const downloadPurchasedBook = async (book) => {
         try {
             const response = await marketplaceApi.downloadBook(book.id);
@@ -647,7 +700,10 @@ function LibraryView({ userData }) {
     return (
         <div className="library-view">
              <section className="library-section">
-                <h3><Unlock size={18}/> Recently Unlocked Leads</h3>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                    <h3><Unlock size={18}/> Recently Unlocked Leads</h3>
+                    {revealedContacts.length > 0 && <button className="btn-search-primary" onClick={downloadLeads} style={{ padding: '0.6rem 1.2rem', fontSize: '0.9rem' }}>Download Unlocked Leads (.csv)</button>}
+                </div>
                 {loading ? <p>Loading library...</p> : (
                     <div className="discovery-grid">
                         {revealedContacts.length > 0 ? revealedContacts.map(c => (
@@ -718,22 +774,22 @@ function StoreView({ userData }) {
     };
 
     const handleBuy = async (book) => {
-        const confirmed = window.confirm(`Proceed with payment of Rs ${book.price} for "${book.title}"?`);
+        const confirmed = window.confirm(`Proceed to secure checkout for "${book.title}"? (Price: Rs ${book.price})`);
         if (!confirmed) return;
 
         setPurchasingBookId(book.id);
         try {
-            const purchaseResponse = await marketplaceApi.buyBook(book.id, `LOCALPAY-${Date.now()}`);
-            if (purchaseResponse.data.success) {
-                const downloadNow = window.confirm("Payment successful. Would you like to download the PDF now?");
-                if (downloadNow) {
-                    await downloadBookImmediately(book);
-                } else {
-                    alert("Book purchased successfully. You can download it any time from My Library.");
-                }
+            const res = await paymentApi.createOrder(null, book.id); // null planId, bookId
+            if (res.data.success) {
+                const checkout = new window.Cashfree({ mode: import.meta.env.VITE_CASHFREE_MODE || "sandbox" });
+                await checkout.checkout({
+                    paymentSessionId: res.data.data.payment_session_id,
+                    redirectTarget: "_self"
+                });
             }
         } catch (e) {
-            alert("Purchase failed.");
+            console.error('Book purchase logic failed', e);
+            alert("Checkout initialization failed. Please try again.");
         } finally {
             setPurchasingBookId(null);
         }
