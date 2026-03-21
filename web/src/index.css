@@ -9,9 +9,12 @@
   --bg-soft: #eef4f7;
   --surface: #ffffff;
   --surface-alt: #f7fbfc;
+  --surface-soft: #f3f9fd;
+  --surface-accent: #ecf7fb;
   --border-light: rgba(255, 255, 255, 0.1);
   --border-strong: rgba(255, 255, 255, 0.2);
   --border-soft: #d9e4ea;
+  --border-accent: #c9dbe7;
   --text-main: #f3f7fb;
   --text-muted: #9db0c3;
   --text-dark: #102133;
@@ -20,6 +23,9 @@
   --accent-primary-strong: #0b8a88;
   --accent-secondary: #f59e0b;
   --accent-sky: #38bdf8;
+  --accent-sky-strong: #0284c7;
+  --accent-emerald-strong: #0f9f6e;
+  --accent-amber-strong: #d97706;
   --success: #1fb981;
   --danger: #e66767;
   --shadow-lg: 0 30px 80px rgba(3, 10, 18, 0.35);
@@ -1088,6 +1094,12 @@ img {
 .summary-card {
   border-radius: 24px;
   padding: 1.5rem;
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.92), transparent 42%),
+    linear-gradient(180deg, #ffffff 0%, var(--surface-soft) 100%);
+  border: 1px solid var(--border-accent);
+  box-shadow: 0 18px 36px rgba(15, 23, 42, 0.08);
+  color: var(--text-dark);
 }
 
 .card-header {
@@ -1100,6 +1112,7 @@ img {
 .card-header h4 {
   font-family: 'Manrope', sans-serif;
   font-size: 1rem;
+  color: var(--text-dark);
 }
 
 .card-items {
@@ -1111,18 +1124,19 @@ img {
 
 .card-items li {
   padding: 0.75rem 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  color: #deedf8;
+  border-bottom: 1px solid rgba(201, 219, 231, 0.72);
+  color: #284257;
 }
 
 .card-action {
   width: 100%;
   padding: 0.9rem 1rem;
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: var(--text-main);
+  background: linear-gradient(180deg, #ffffff 0%, #edf7fc 100%);
+  border: 1px solid #c8dbe7;
+  color: var(--text-dark);
   font-weight: 700;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 .ai-cta-card {
@@ -1168,7 +1182,8 @@ img {
   min-height: 72vh;
   border-radius: 28px;
   overflow: hidden;
-  background: var(--surface-alt);
+  background: linear-gradient(180deg, #f9fcfe 0%, #f2f8fb 100%);
+  border: 1px solid rgba(201, 219, 231, 0.8);
   box-shadow: var(--shadow-lg);
 }
 
@@ -1182,7 +1197,8 @@ img {
 
 .apollo-sidebar-rail {
   padding: 1.4rem;
-  border-right: 1px solid var(--border-soft);
+  background: linear-gradient(180deg, #ffffff 0%, #f6fbfe 100%);
+  border-right: 1px solid var(--border-accent);
 }
 
 .sidebar-section {
@@ -1190,7 +1206,7 @@ img {
 }
 
 .sidebar-section-title {
-  color: var(--text-soft-dark);
+  color: #587084;
   font-size: 0.74rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -1216,9 +1232,9 @@ img {
 
 .apollo-filter-item input,
 .apollo-filter-item select {
-  background: #f8fbfd;
+  background: #fbfdff;
   color: var(--text-dark);
-  border: 1px solid var(--border-soft);
+  border: 1px solid #cfe0ea;
   border-radius: 14px;
 }
 
@@ -2599,38 +2615,47 @@ img {
   left: -30%;
   width: 70%;
   height: 180%;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), transparent 60%);
+  background: linear-gradient(180deg, rgba(56, 189, 248, 0.18), transparent 60%);
   transform: rotate(22deg);
-  opacity: 0.12;
+  opacity: 0.18;
   animation: beamSlide 7.5s ease-in-out infinite;
   pointer-events: none;
 }
 
 .tone-sky {
-  border-color: rgba(56, 189, 248, 0.22);
+  border-color: rgba(14, 165, 233, 0.34);
+  background:
+    radial-gradient(circle at top right, rgba(186, 230, 253, 0.95), transparent 38%),
+    linear-gradient(180deg, #ffffff 0%, #eef8ff 100%);
 }
 
 .tone-emerald {
-  border-color: rgba(31, 185, 129, 0.24);
+  border-color: rgba(16, 185, 129, 0.32);
+  background:
+    radial-gradient(circle at top right, rgba(209, 250, 229, 0.9), transparent 38%),
+    linear-gradient(180deg, #ffffff 0%, #effcf6 100%);
 }
 
 .tone-amber {
-  border-color: rgba(245, 158, 11, 0.26);
+  border-color: rgba(245, 158, 11, 0.34);
+  background:
+    radial-gradient(circle at top right, rgba(254, 240, 138, 0.7), transparent 36%),
+    linear-gradient(180deg, #ffffff 0%, #fff8ee 100%);
 }
 
 .tone-sky .card-header svg,
 .tone-sky .card-action {
-  color: #9de9ff;
+  color: var(--accent-sky-strong);
 }
 
 .tone-emerald .card-header svg,
 .tone-emerald .card-action {
-  color: #98f1cb;
+  color: var(--accent-emerald-strong);
 }
 
 .tone-amber .card-header svg,
 .tone-amber .card-action {
-  color: #ffd67e;
+  color: var(--accent-amber-strong);
 }
 
 .card-action {
@@ -3659,4 +3684,3 @@ img {
   font-size: 0.82rem;
   font-weight: 600;
 }
-
