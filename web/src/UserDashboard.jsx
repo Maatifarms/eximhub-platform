@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { discoveryApi, creditsApi, marketplaceApi, authApi, marketIntelligenceApi } from './api';
 import { Link } from 'react-router-dom';
-import { LayoutDashboard, Globe, Search, Book, BookOpen, CreditCard, TrendingUp, Cpu, User, LogOut, BarChart as BarChartIcon, MapPin, Briefcase, Unlock, Send, Bot, CheckCircle, ExternalLink, Shield, Mail, Phone, Building2, Database } from 'lucide-react';
+import { LayoutDashboard, Globe, Search, Book, BookOpen, CreditCard, TrendingUp, Cpu, User, LogOut, BarChart as BarChartIcon, MapPin, Briefcase, Unlock, Send, Bot, CheckCircle, ExternalLink, Shield, Mail, Phone, Building2, Database, Truck, Copy, X, AlertCircle } from 'lucide-react';
 import CompanyDirectory from './CompanyDirectory';
 
 export default function UserDashboard({ user }) {
@@ -157,7 +157,7 @@ export default function UserDashboard({ user }) {
                     <span>Directory indexed</span>
                 </div>
             </section>
-            {activeView === 'Dashboard' && <DashboardHome userData={userData} setActiveView={setActiveView} />}
+            {activeView === 'Dashboard' && <DashboardHome userData={userData} setActiveView={setActiveView} setSearchState={setSearchState} />}
             {activeView === 'Search' && <GlobalSearchView userData={userData} user={user} refreshUserData={refreshUserData} state={searchState} setState={setSearchState} />}
             {activeView === 'Market Intelligence' && <MarketIntelligenceView state={marketState} setState={setMarketState} />}
             {activeView === 'Airlines' && <AirlinesView />}
@@ -283,6 +283,11 @@ function MarketIntelligenceView({ state, setState }) {
                     />
                 </div>
 
+                {rows.length > 0 && (
+                    <div style={{marginBottom:'0.75rem',fontWeight:600,color:'var(--text-muted)',fontSize:'0.9rem'}}>
+                        {rows.length} shipment records found
+                    </div>
+                )}
                 <div className="lead-table-container">
                     <table className="lead-data-table">
                         <thead>
@@ -293,27 +298,30 @@ function MarketIntelligenceView({ state, setState }) {
                                 <th>Shipper</th>
                                 <th>Destination</th>
                                 <th>Route</th>
-                                <th>Value</th>
+                                <th>Value (USD)</th>
                                 <th>Segment</th>
                             </tr>
                         </thead>
                         <tbody>
                              {rows.map(row => (
                                  <tr key={row.id}>
-                                     <td>{row.product_description}</td>
+                                     <td style={{maxWidth:'200px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={row.product_description}>{row.product_description}</td>
                                      <td><span className="code-badge">{row.hs_code}</span></td>
-                                     <td>{row.consignee_name}</td>
-                                     <td>{row.shipper_name}</td>
-                                     <td>{row.country_of_destination}</td>
-                                     <td>{row.port_of_origin} to {row.port_of_destination}</td>
-                                     <td><span className="status-pill unlocked">USD {row.estimated_fob_value_usd || row.quantity_value}</span></td>
-                                     <td><span className={`status-pill ${row.market_segment === 'high-fit' ? 'unlocked' : 'pending'}`}>{row.market_segment || 'N/A'}</span></td>
+                                     <td>{row.consignee_name || <span className="text-muted">—</span>}</td>
+                                     <td>{row.shipper_name || <span className="text-muted">—</span>}</td>
+                                     <td>{row.country_of_destination || <span className="text-muted">—</span>}</td>
+                                     <td style={{fontSize:'0.8rem'}}>{row.port_of_origin && row.port_of_destination ? `${row.port_of_origin} → ${row.port_of_destination}` : <span className="text-muted">—</span>}</td>
+                                     <td><span className="status-pill unlocked">{row.estimated_fob_value_usd || row.quantity_value || '—'}</span></td>
+                                     <td><span className={`status-pill ${row.market_segment === 'high-fit' ? 'unlocked' : 'pending'}`}>{row.market_segment || 'general'}</span></td>
                                  </tr>
                              ))}
                             {rows.length === 0 && (
                                 <tr>
                                     <td colSpan="8" style={{ textAlign: 'center', padding: '3rem', color: '#64748b' }}>
-                                        Run a search to explore buyers, shippers, products, and trade routes from the imported intelligence dataset.
+                                        <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'0.75rem'}}>
+                                            <Database size={32} style={{opacity:0.3}}/>
+                                            <span>Set filters and click <strong>Search Intelligence</strong> to query shipment records.</span>
+                                        </div>
                                     </td>
                                 </tr>
                             )}
@@ -334,14 +342,22 @@ function NavItem({ icon, label, active, onClick }) {
   );
 }
 
-function DashboardHome({ userData, setActiveView }) {
+function DashboardHome({ userData, setActiveView, setSearchState }) {
     const [analytics, setAnalytics] = useState(null);
+    const [quickKeyword, setQuickKeyword] = useState('');
 
     useEffect(() => {
         discoveryApi.getAnalytics().then(res => {
             if (res.data.success) setAnalytics(res.data.data);
         });
     }, []);
+
+    const handleQuickSearch = () => {
+        if (quickKeyword.trim()) {
+            setSearchState(prev => ({ ...prev, productKeyword: quickKeyword.trim() }));
+        }
+        setActiveView('Search');
+    };
 
     return (
         <>
@@ -374,10 +390,16 @@ function DashboardHome({ userData, setActiveView }) {
                     <div className="search-inputs">
                         <div className="input-with-icon">
                             <Search size={18} className="text-muted" />
-                            <input type="text" placeholder="Try keywords like cotton, dairy, steel, packaging..." />
+                            <input
+                                type="text"
+                                placeholder="Try keywords like cotton, dairy, steel, packaging..."
+                                value={quickKeyword}
+                                onChange={e => setQuickKeyword(e.target.value)}
+                                onKeyDown={e => e.key === 'Enter' && handleQuickSearch()}
+                            />
                         </div>
                     </div>
-                    <button className="btn-search-primary" onClick={() => setActiveView('Search')}>Start Discovery</button>
+                    <button className="btn-search-primary" onClick={handleQuickSearch}>Start Discovery</button>
                 </div>
             </section>
 
@@ -420,27 +442,53 @@ function CrmView({ revealedContacts }) {
                     <thead>
                         <tr>
                             <th>Contact</th>
+                            <th>Email</th>
+                            <th>Phone</th>
                             <th>Company</th>
-                            <th>Status</th>
-                            <th>Last Activity</th>
-                            <th>Action</th>
+                            <th>Country</th>
+                            <th>Unlocked</th>
                         </tr>
                     </thead>
                     <tbody>
                         {revealedContacts?.map(c => (
                             <tr key={c.id}>
                                 <td>
-                                    <strong>{c.full_name}</strong>
-                                    <div className="text-xs text-muted">{c.email}</div>
+                                    <div className="lead-name-cell">
+                                        <div className="lead-avatar-sm">{c.full_name?.charAt(0)}</div>
+                                        <div>
+                                            <div className="lead-name-main">{c.full_name}</div>
+                                            <div className="lead-title-sub">{c.title}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    {c.email ? (
+                                        <div className="enrich-copy-row">
+                                            <a href={`mailto:${c.email}`} style={{color:'var(--accent-sky)',fontSize:'0.85rem'}}>{c.email}</a>
+                                            <button className="copy-btn" onClick={() => navigator.clipboard.writeText(c.email)} title="Copy"><Copy size={12}/></button>
+                                        </div>
+                                    ) : <span className="text-muted">—</span>}
+                                </td>
+                                <td>
+                                    {c.phone ? (
+                                        <div className="enrich-copy-row">
+                                            <span style={{fontSize:'0.85rem'}}>{c.phone}</span>
+                                            <button className="copy-btn" onClick={() => navigator.clipboard.writeText(c.phone)} title="Copy"><Copy size={12}/></button>
+                                        </div>
+                                    ) : <span className="text-muted">—</span>}
                                 </td>
                                 <td>{c.company_name}</td>
-                                <td><span className="status-pill unlocked">New Lead</span></td>
-                                <td>Recently Unlocked</td>
-                                <td><button className="view-details-btn">Open Profile</button></td>
+                                <td>{c.country || <span className="text-muted">—</span>}</td>
+                                <td style={{fontSize:'0.8rem',color:'var(--text-muted)'}}>{c.revealed_at ? new Date(c.revealed_at).toLocaleDateString() : '—'}</td>
                             </tr>
                         ))}
                         {(!revealedContacts || revealedContacts.length === 0) && (
-                            <tr><td colSpan="5" className="text-center py-8 text-muted">No unlocked leads in your pipeline yet. Start discovering in the Search workspace.</td></tr>
+                            <tr><td colSpan="6" style={{textAlign:'center',padding:'3rem',color:'#64748b'}}>
+                                <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'0.75rem'}}>
+                                    <Unlock size={28} style={{opacity:0.3}}/>
+                                    <span>No unlocked contacts yet. Reveal contacts in Procurement Discovery to build your pipeline.</span>
+                                </div>
+                            </td></tr>
                         )}
                     </tbody>
                 </table>
@@ -519,10 +567,9 @@ function GlobalSearchView({ userData, user, refreshUserData, state, setState }) 
 
     const handleSearch = async () => {
         if ((userData?.points_balance || 0) < limit) {
-            alert(`Insufficient points. You need ${limit} points to perform this discovery search.`);
+            alert(`Insufficient credits. You need ${limit} credits but have ${userData?.points_balance || 0}.`);
             return;
         }
-        if (!window.confirm(`Perform procurement discovery search? This will deduct ${limit} points.`)) return;
 
         setState(prev => ({ ...prev, loading: true }));
         try {
@@ -572,7 +619,7 @@ function GlobalSearchView({ userData, user, refreshUserData, state, setState }) 
                              </select>
                          </div>
                         <button className="enrich-btn-primary" onClick={handleSearch} disabled={loading} style={{marginTop: '1rem'}}>
-                            <Search size={16}/> {loading ? 'Searching...' : 'Search Leads'}
+                            <Search size={16}/> {loading ? 'Searching...' : `Search Leads (${limit} credits)`}
                         </button>
                     </div>
                 </div>
@@ -582,8 +629,13 @@ function GlobalSearchView({ userData, user, refreshUserData, state, setState }) 
             <div className="lead-intelligence-main">
                 <div className="lead-table-header">
                     <div className="stats-row">
-                        <span style={{fontWeight: 600}}>{contacts.length} Leads Found</span>
+                        <span style={{fontWeight: 600}}>{contacts.length > 0 ? `${contacts.length} leads found` : 'No search run yet'}</span>
                     </div>
+                    {(userData?.points_balance || 0) < limit && (
+                        <div className="credits-warning">
+                            <AlertCircle size={14}/> Not enough credits ({userData?.points_balance || 0} available, {limit} needed)
+                        </div>
+                    )}
                 </div>
 
                 <div className="lead-table-container">
@@ -593,13 +645,14 @@ function GlobalSearchView({ userData, user, refreshUserData, state, setState }) 
                                 <th>Name & Title</th>
                                 <th>Company</th>
                                 <th>Industry</th>
-                                <th>Contact Info</th>
+                                <th>Country</th>
+                                <th>Contact</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                          {contacts.map(lead => (
-                                 <tr key={lead.id} onClick={() => updateState('selectedLead', lead)}>
+                                 <tr key={lead.id} onClick={() => updateState('selectedLead', lead)} style={{cursor: 'pointer'}}>
                                      <td>
                                          <div className="lead-name-cell">
                                              <div className="lead-avatar-sm">{lead.full_name?.charAt(0)}</div>
@@ -610,7 +663,14 @@ function GlobalSearchView({ userData, user, refreshUserData, state, setState }) 
                                          </div>
                                      </td>
                                      <td>{lead.company_name}</td>
-                                     <td>{lead.industry}</td>
+                                     <td>{lead.industry || <span className="text-muted">—</span>}</td>
+                                     <td>
+                                         {lead.country ? (
+                                             <span style={{display:'flex',alignItems:'center',gap:'4px'}}>
+                                                 <MapPin size={12} className="text-muted"/>{lead.country}
+                                             </span>
+                                         ) : <span className="text-muted">—</span>}
+                                     </td>
                                      <td>
                                          {lead.email ? (
                                              <span className="status-pill unlocked"><CheckCircle size={12} style={{marginRight: '4px'}}/> Revealed</span>
@@ -619,14 +679,17 @@ function GlobalSearchView({ userData, user, refreshUserData, state, setState }) 
                                          )}
                                      </td>
                                      <td>
-                                         <button className="view-details-btn" onClick={() => updateState('selectedLead', lead)}>View</button>
+                                         <button className="view-details-btn" onClick={e => { e.stopPropagation(); updateState('selectedLead', lead); }}>View</button>
                                      </td>
                                  </tr>
                              ))}
                         {contacts.length === 0 && (
                                 <tr>
-                                    <td colSpan="5" style={{textAlign: 'center', padding: '4rem', color: '#64748b'}}>
-                                        Use the filters to start identifying procurement leads with stronger export intent.
+                                    <td colSpan="6" style={{textAlign: 'center', padding: '4rem', color: '#64748b'}}>
+                                        <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'0.75rem'}}>
+                                            <Search size={32} style={{opacity:0.3}}/>
+                                            <span>Select filters and click <strong>Search Leads</strong> to find procurement contacts.</span>
+                                        </div>
                                     </td>
                                 </tr>
                             )}
@@ -651,25 +714,35 @@ function GlobalSearchView({ userData, user, refreshUserData, state, setState }) 
                             {selectedLead.email ? (
                                 <>
                                     <div className="enrich-data-row">
-                                        <div className="enrich-label">Email</div>
-                                        <div className="enrich-value">{selectedLead.email}</div>
-                                    </div>
-                                    <div className="enrich-data-row">
-                                        <div className="enrich-label">Phone</div>
-                                        <div className="enrich-value">{selectedLead.phone || 'Standard Office Line'}</div>
-                                    </div>
-                                    <div className="enrich-data-row">
-                                        <div className="enrich-label">LinkedIn</div>
-                                        <div className="enrich-value">
-                                            <a href={selectedLead.linkedin} target="_blank" rel="noreferrer" style={{color: '#0046fe'}}>View Profile</a>
+                                        <div className="enrich-label"><Mail size={13}/> Email</div>
+                                        <div className="enrich-value enrich-copy-row">
+                                            <span>{selectedLead.email}</span>
+                                            <button className="copy-btn" title="Copy email" onClick={() => navigator.clipboard.writeText(selectedLead.email)}><Copy size={13}/></button>
                                         </div>
                                     </div>
+                                    {selectedLead.phone && (
+                                        <div className="enrich-data-row">
+                                            <div className="enrich-label"><Phone size={13}/> Phone</div>
+                                            <div className="enrich-value enrich-copy-row">
+                                                <span>{selectedLead.phone}</span>
+                                                <button className="copy-btn" title="Copy phone" onClick={() => navigator.clipboard.writeText(selectedLead.phone)}><Copy size={13}/></button>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {selectedLead.linkedin && (
+                                        <div className="enrich-data-row">
+                                            <div className="enrich-label">LinkedIn</div>
+                                            <div className="enrich-value">
+                                                <a href={selectedLead.linkedin} target="_blank" rel="noreferrer" style={{color: 'var(--accent-sky)'}}>View Profile →</a>
+                                            </div>
+                                        </div>
+                                    )}
                                 </>
                             ) : (
-                                <div style={{textAlign: 'center', padding: '1rem', background: '#f8fafc', borderRadius: '8px', border: '1px dashed #cbd5e1'}}>
-                                    <p style={{fontSize: '0.875rem', color: '#64748b', marginBottom: '1rem'}}>Direct contact intelligence is locked.</p>
+                                <div className="reveal-locked-box">
+                                    <Shield size={24} style={{opacity: 0.4}}/>
+                                    <p>Contact details are locked. Use 1 credit to unlock.</p>
                                     <button className="enrich-btn-primary" onClick={async () => {
-                                        if (!window.confirm(`Reveal contact for 1 point?`)) return;
                                          try {
                                              const res = await creditsApi.reveal([selectedLead.id]);
                                              if (res.data.success) {
@@ -677,11 +750,10 @@ function GlobalSearchView({ userData, user, refreshUserData, state, setState }) 
                                                  updateState('contacts', contacts.map(c => c.id === selectedLead.id ? {...c, ...revealed} : c));
                                                  updateState('selectedLead', {...selectedLead, ...revealed});
                                                  if (refreshUserData) refreshUserData();
-                                                 fetchRevealed(); 
                                              }
                                          } catch(e) { alert("Failed to reveal lead."); }
                                     }}>
-                                        <Unlock size={16}/> Reveal for 1 Point
+                                        <Unlock size={16}/> Reveal for 1 Credit
                                     </button>
                                 </div>
                             )}

@@ -3600,3 +3600,63 @@ img {
   }
 }
 
+/* ── Copy button ── */
+.copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 6px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 6px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  flex-shrink: 0;
+}
+.copy-btn:hover {
+  background: rgba(14,165,163,0.18);
+  color: var(--accent-primary);
+  border-color: rgba(14,165,163,0.3);
+}
+
+/* ── Enrich copy row ── */
+.enrich-copy-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ── Reveal locked box ── */
+.reveal-locked-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.5rem 1rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px dashed rgba(255,255,255,0.14);
+  border-radius: 12px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+.reveal-locked-box p {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+/* ── Credits warning banner ── */
+.credits-warning {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.9rem;
+  background: rgba(230,103,103,0.1);
+  border: 1px solid rgba(230,103,103,0.25);
+  border-radius: 8px;
+  color: var(--danger);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
