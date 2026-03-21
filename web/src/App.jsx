@@ -75,24 +75,29 @@ const PricingPage = ({ user, onAuthSuccess }) => {
       </div>
       <div className="pricing-grid" style={{ padding: '0 2rem 4rem' }}>
         <PricingCard
-          title="Program 1"
+          title="Market Explorer"
           price="Rs 25,000"
-          features={['500 Procurement Credits', 'Market Intelligence Access', 'Standard Support']}
+          priceUsd="~ $300 USD"
+          period="Annual"
+          features={['500 Procurement Credits', 'Buyer & Supplier Search (195 Countries)', 'Market Intelligence Access', 'Trade Directory Access', 'Email Support']}
           onSelect={() => handleSelectPlan('program_1')}
           loading={loadingPlan === 'program_1'}
         />
         <PricingCard
-          title="Program 2"
+          title="Trade Accelerator"
           price="Rs 45,000"
+          priceUsd="~ $540 USD"
+          period="Semi-Annual"
           highlight={true}
-          features={['1,200 Procurement Credits', 'Priority AI Discovery', 'Global Sales Partner Status']}
+          features={['1,200 Procurement Credits', 'Priority Buyer Discovery', 'Global Sales Partner Status', 'Market Entry Consultation', 'WhatsApp & LinkedIn Access', 'Priority Support']}
           onSelect={() => handleSelectPlan('program_2')}
           loading={loadingPlan === 'program_2'}
         />
         <PricingCard
           title="Enterprise"
           price="Custom"
-          features={['Unlimited Credits', 'Bespoke Sourcing Strategy', 'Dedicated Trade Consultant']}
+          period="On Demand"
+          features={['Unlimited Credits', 'Bespoke Sourcing Strategy', 'Dedicated Trade Consultant', 'Custom API Integration', 'Real-time Compliance Tracking']}
           onSelect={() => handleSelectPlan('enterprise')}
           loading={loadingPlan === 'enterprise'}
           buttonLabel="Talk to Sales"
@@ -114,10 +119,13 @@ const PricingPage = ({ user, onAuthSuccess }) => {
   );
 };
 
-const PricingCard = ({ title, price, features, highlight, onSelect, loading, buttonLabel = 'Select Plan' }) => (
+const PricingCard = ({ title, price, priceUsd, period, features, highlight, onSelect, loading, buttonLabel = 'Select Plan' }) => (
   <div className={`pricing-card ${highlight ? 'highlighted' : ''}`}>
+    {highlight && <div className="featured-badge">Most Popular</div>}
     <h3>{title}</h3>
     <div className="price">{price}</div>
+    {priceUsd && <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '-0.25rem', marginBottom: '0.25rem' }}>{priceUsd}</div>}
+    {period && <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>{period}</div>}
     <ul className="pricing-features">
       {features.map((feature, index) => (
         <li key={index}>
@@ -191,12 +199,41 @@ const PaymentVerification = ({ onAuthSuccess }) => {
   );
 };
 
-const BookPage = () => (
-  <div className="page-container">
-    <h2>Digital Book: Global Trade Secrets</h2>
-    <p>Master international sourcing for Rs 500.</p>
-  </div>
-);
+const BookPage = () => {
+  const navigate = useNavigate();
+  return (
+    <div className="pricing-page">
+      <PublicNav />
+      <div className="section-header" style={{ marginTop: '4rem' }}>
+        <h1>Global Trade Secrets</h1>
+        <p>A practical playbook for exporters entering new markets and finding verified buyers faster.</p>
+      </div>
+      <div className="pricing-support-card" style={{ maxWidth: '640px', margin: '0 auto 3rem' }}>
+        <h3>What's inside this guide</h3>
+        <ul style={{ listStyle: 'none', padding: 0, margin: '1rem 0', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+          {[
+            'How to identify high-value procurement contacts in any country',
+            'HS code strategies for product classification and tariff savings',
+            'Building an outbound pipeline from verified buyer data',
+            'Market entry frameworks for 10 key export destinations',
+            'How to use shipment intelligence to outpace competitors',
+          ].map((item) => (
+            <li key={item} style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', color: 'var(--text-secondary)' }}>
+              <CheckCircle size={16} style={{ color: '#22c55e', marginTop: '3px', flexShrink: 0 }} />
+              {item}
+            </li>
+          ))}
+        </ul>
+        <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>Available inside the EximHub dashboard after login. Rs 499 one-time purchase.</p>
+        <button className="btn-primary" onClick={() => navigate('/login')} style={{ marginRight: '1rem' }}>
+          Login to Buy — Rs 499
+        </button>
+        <Link to="/contact" style={{ color: 'var(--accent-primary)' }}>Have a question first?</Link>
+      </div>
+      <SiteFooter />
+    </div>
+  );
+};
 
 function AppContent() {
   const [user, setUser] = useState(null);

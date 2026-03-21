@@ -51,8 +51,8 @@ router.post('/search', auth, async (req, res) => {
       params.push(hsCode);
     }
     if (country) {
-      sql += ' AND country_of_destination = ?';
-      params.push(country);
+      sql += ' AND country_of_destination LIKE ?';
+      params.push(`%${country}%`);
     }
     if (shipperName) {
       sql += ' AND shipper_name LIKE ?';
@@ -71,13 +71,14 @@ router.post('/search', auth, async (req, res) => {
       params.push(`%${port}%`, `%${port}%`);
     }
     if (shipmentMode) {
-      sql += ' AND shipment_mode = ?';
-      params.push(shipmentMode);
+      sql += ' AND shipment_mode LIKE ?';
+      params.push(`%${shipmentMode}%`);
     }
 
     sql += ' ORDER BY shipment_date DESC, id DESC LIMIT ?';
     params.push(Math.min(parseInt(limit, 10) || 25, 100));
 
+    console.log('MARKET_INTELLIGENCE_SEARCH_PARAMS:', { keyword, hsCode, country, shipperName, consigneeName, marketSegment, port, shipmentMode, limit });
     const [rows] = await db.query(sql, params);
     res.json({ success: true, data: rows });
   } catch (error) {
@@ -130,15 +131,22 @@ router.get('/overview', auth, async (req, res) => {
       `),
     ]);
 
+    const data = {
+      totals: totals[0] || {},
+      topCountries,
+      topProducts,
+      topShippers,
+      segments,
+    };
+    
+    console.log('MARKET_INTELLIGENCE_OVERVIEW_DATA:', { 
+      count: data.totals.total_records, 
+      countries: data.topCountries.length 
+    });
+
     res.json({
       success: true,
-      data: {
-        totals: totals || {},
-        topCountries,
-        topProducts,
-        topShippers,
-        segments,
-      },
+      data: data,
     });
   } catch (error) {
     console.error('MARKET_INTELLIGENCE_OVERVIEW_ERROR:', error);

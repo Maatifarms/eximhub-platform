@@ -58,9 +58,14 @@ router.post('/reveal', auth, async (req, res) => {
                 );
             }
 
-            await conn.commit();
-
+            // Fetch contact data INSIDE transaction — verify data exists before committing credits
             const [revealedContacts] = await conn.query('SELECT * FROM contacts WHERE id IN (?)', [contactIds]);
+            if (revealedContacts.length === 0) {
+                await conn.rollback();
+                return res.status(404).json({ success: false, message: 'Contact data not found. No credits were deducted.' });
+            }
+
+            await conn.commit();
             res.json({ success: true, message: `${count} new contacts revealed`, data: revealedContacts });
         } catch (err) {
             await conn.rollback();

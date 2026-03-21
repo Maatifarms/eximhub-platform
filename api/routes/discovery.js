@@ -222,7 +222,7 @@ router.post('/search', auth, async (req, res) => {
 
         // 4. Log into reveals
         for (const contact of contacts) {
-            await connection.query('INSERT INTO reveals (user_id, contact_id, points_used) VALUES (?, ?, 1)', [userId, contact.id]);
+            await connection.query('INSERT IGNORE INTO reveals (user_id, contact_id, points_used) VALUES (?, ?, 1)', [userId, contact.id]);
         }
 
         // 5. Log trends (optional but nice)

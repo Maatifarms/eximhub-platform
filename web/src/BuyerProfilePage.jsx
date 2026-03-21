@@ -43,7 +43,11 @@ export default function BuyerProfilePage() {
         try {
             const res = await creditsApi.reveal([parseInt(id, 10)]);
             if (res.data.success) {
-                const revealed = res.data.data[0] || {};
+                const revealed = res.data.data?.[0];
+                if (!revealed) {
+                    alert('Contact data could not be retrieved. No credits were deducted.');
+                    return;
+                }
                 setLead((prev) => ({ ...prev, ...revealed, is_revealed: 1 }));
             }
         } catch (e) {
@@ -54,7 +58,7 @@ export default function BuyerProfilePage() {
     if (loading) return <div className="loading-state">Loading Profile...</div>;
     if (!lead) return <div className="p-8">Lead not found.</div>;
 
-    const isRevealed = Boolean(Number(lead.is_revealed)) || Boolean(lead.email);
+    const isRevealed = Boolean(Number(lead.is_revealed));
 
     const mask = (str) => {
         if (!str) return '********';

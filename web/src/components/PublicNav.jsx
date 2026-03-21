@@ -15,7 +15,7 @@ export default function PublicNav({ showFeatureLink = false }) {
   return (
     <nav className={`landing-nav ${menuOpen ? 'menu-open' : ''}`}>
       <div className="nav-brand-row">
-        <Link to="/" className="logo-text" onClick={closeMenu}>EximHub AI</Link>
+        <Link to="/" className="logo-text" onClick={closeMenu}>EximHub</Link>
         <button
           type="button"
           className="nav-toggle"

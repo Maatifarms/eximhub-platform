@@ -6,12 +6,11 @@ import { createDrawerNavigator } from '@react-navigation/drawer';
 // @ts-ignore
 import { createStackNavigator } from '@react-navigation/stack';
 import { NavigationContainer } from '@react-navigation/native';
-import { Globe, Briefcase, Bot, Upload, Library, BookOpen, MessageSquare, UserCircle, LineChart, CreditCard, ShoppingCart, LogOut } from 'lucide-react-native';
+import { Globe, Briefcase, Upload, Library, BookOpen, MessageSquare, UserCircle, LineChart, CreditCard, ShoppingCart, LogOut } from 'lucide-react-native';
 import { setTier } from '../api/client';
 
 import DiscoveryScreen from '../screens/DiscoveryScreen';
 import CrmScreen from '../screens/CrmScreen';
-import AiAssistantScreen from '../screens/AiAssistantScreen';
 import UploadScreen from '../screens/UploadScreen';
 import TradeLibraryScreen from '../screens/TradeLibraryScreen';
 import DatasetPreviewScreen from '../screens/DatasetPreviewScreen';

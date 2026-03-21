@@ -171,7 +171,7 @@ async function buildOpenAiLeadSummary(payload, fallback) {
     }
 
     const result = await response.json();
-    const raw = result.output_text || '{}';
+    const raw = result.output?.[0]?.content?.[0]?.text || '{}';
     return JSON.parse(raw);
   } catch (error) {
     console.error('OPENAI_LEAD_SUMMARY_ERROR:', error.message);

@@ -59,7 +59,7 @@ export default function LoginScreen({ onAuthSuccess }: { onAuthSuccess?: () => P
     <View style={styles.container}>
       <View style={styles.header}>
         <Shield size={40} color="#3b82f6" />
-        <Text style={styles.title}>EximHub AI</Text>
+        <Text style={styles.title}>EximHub</Text>
         <Text style={styles.subtitle}>Global Trade Intelligence Platform</Text>
       </View>
       

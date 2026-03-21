@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { discoveryApi, creditsApi, marketplaceApi, authApi, marketIntelligenceApi } from './api';
+import React, { useState, useEffect } from 'react';
+import { discoveryApi, creditsApi, marketplaceApi, authApi, marketIntelligenceApi, paymentApi } from './api';
 import { Link } from 'react-router-dom';
-import { LayoutDashboard, Globe, Search, Book, BookOpen, CreditCard, TrendingUp, Cpu, User, LogOut, BarChart as BarChartIcon, MapPin, Briefcase, Unlock, Send, Bot, CheckCircle, ExternalLink, Shield, Mail, Phone, Building2, Database, Truck, Copy, X, AlertCircle } from 'lucide-react';
+import { LayoutDashboard, Globe, Search, Book, BookOpen, CreditCard, TrendingUp, User, LogOut, BarChart as BarChartIcon, MapPin, Briefcase, Unlock, CheckCircle, ExternalLink, Shield, Mail, Phone, Building2, Database, Copy, X, AlertCircle } from 'lucide-react';
 import CompanyDirectory from './CompanyDirectory';
 
 export default function UserDashboard({ user }) {
@@ -105,20 +105,17 @@ export default function UserDashboard({ user }) {
     <div className="user-dashboard">
       <aside className="user-sidebar">
         <div className="sidebar-header">
-            <span className="logo-small">EximHub <span className="text-blue-500">AI</span></span>
+            <span className="logo-small">EximHub</span>
         </div>
         <nav className="sidebar-nav">
           <NavItem active={activeView === 'Dashboard'} icon={<LayoutDashboard size={20}/>} label="Dashboard" onClick={() => setActiveView('Dashboard')} />
           <NavItem active={activeView === 'Search'} icon={<Search size={20}/>} label="Procurement Discovery" onClick={() => setActiveView('Search')} />
           <NavItem active={activeView === 'Market Intelligence'} icon={<Database size={20}/>} label="Market Intelligence" onClick={() => setActiveView('Market Intelligence')} />
-          <NavItem active={activeView === 'Airlines'} icon={<Truck size={20}/>} label="Carrier Intelligence" onClick={() => setActiveView('Airlines')} />
           <NavItem active={activeView === 'Library'} icon={<Book size={20}/>} label="My Library" onClick={() => setActiveView('Library')} />
           <NavItem active={activeView === 'CRM'} icon={<Briefcase size={20}/>} label="Pipeline CRM" onClick={() => setActiveView('CRM')} />
           <NavItem active={activeView === 'Directory'} icon={<Building2 size={20}/>} label="Trade Directory" onClick={() => setActiveView('Directory')} />
           <NavItem active={activeView === 'Store'} icon={<CreditCard size={20}/>} label="Digital Store" onClick={() => setActiveView('Store')} />
-          {/* AI Assistant is currently in maintenance, moved to a button if needed */}
           <div className="sidebar-divider"></div>
-          <NavItem active={activeView === 'AI'} icon={<Bot size={20}/>} label="AI Intelligence" onClick={() => setActiveView('AI')} />
           <NavItem active={activeView === 'Profile'} icon={<User size={20}/>} label="Profile" onClick={() => setActiveView('Profile')} />
           <button className="nav-logout" onClick={handleLogout}><LogOut size={20}/> Logout</button>
         </nav>
@@ -148,25 +145,21 @@ export default function UserDashboard({ user }) {
                     <span>Search engine online</span>
                     <span>Credits synced</span>
                     <span>Marketplace ready</span>
-                    <span>AI workspace active</span>
                     <span>Directory indexed</span>
                     <span>Search engine online</span>
                     <span>Credits synced</span>
                     <span>Marketplace ready</span>
-                    <span>AI workspace active</span>
                     <span>Directory indexed</span>
                 </div>
             </section>
             {activeView === 'Dashboard' && <DashboardHome userData={userData} setActiveView={setActiveView} setSearchState={setSearchState} />}
             {activeView === 'Search' && <GlobalSearchView userData={userData} user={user} refreshUserData={refreshUserData} state={searchState} setState={setSearchState} />}
             {activeView === 'Market Intelligence' && <MarketIntelligenceView state={marketState} setState={setMarketState} />}
-            {activeView === 'Airlines' && <AirlinesView />}
             {activeView === 'Library' && <LibraryView userData={userData} user={user} />}
             {activeView === 'CRM' && <CrmView revealedContacts={revealedContacts} />}
             {activeView === 'Directory' && <CompanyDirectory setActiveView={setActiveView} />}
             {activeView === 'Store' && <StoreView userData={userData} />}
             {activeView === 'Profile' && <ProfileView userData={userData} user={user} refreshUserData={refreshUserData} />}
-            {activeView === 'AI' && <AIView userData={userData} />}
         </div>
       </main>
     </div>
@@ -231,8 +224,12 @@ function MarketIntelligenceView({ state, setState }) {
                             <label>Segment</label>
                             <select value={filters.marketSegment} onChange={e => updateFilter('marketSegment', e.target.value)}>
                                 <option value="">All Segments</option>
-                                <option value="general">General</option>
+                                <option value="agro">Agro / Food</option>
+                                <option value="textile">Textile & Apparel</option>
                                 <option value="building_material">Building Material</option>
+                                <option value="pharma">Pharma & Chemicals</option>
+                                <option value="engineering">Engineering & Machinery</option>
+                                <option value="general">General</option>
                             </select>
                         </div>
                         <div className="apollo-filter-item">
@@ -241,7 +238,13 @@ function MarketIntelligenceView({ state, setState }) {
                         </div>
                         <div className="apollo-filter-item">
                             <label>Shipment Mode</label>
-                            <input value={filters.shipmentMode} onChange={e => updateFilter('shipmentMode', e.target.value)} placeholder="Sea, Air, Road..." />
+                            <select value={filters.shipmentMode} onChange={e => updateFilter('shipmentMode', e.target.value)}>
+                                <option value="">All Modes</option>
+                                <option value="Sea">Sea</option>
+                                <option value="Air">Air</option>
+                                <option value="Road">Road</option>
+                                <option value="Rail">Rail</option>
+                            </select>
                         </div>
                         <div className="apollo-filter-item">
                             <label>Limit</label>
@@ -378,9 +381,9 @@ function DashboardHome({ userData, setActiveView, setSearchState }) {
                     <p>Use country, industry, and company filters to create a clean outbound queue.</p>
                 </div>
                 <div className="mission-card">
-                    <span className="mission-kicker">Asset Layer</span>
-                    <strong>Paid ebook now unlocked on purchase</strong>
-                    <p>Digital assets live inside the same workflow as your prospecting and research.</p>
+                    <span className="mission-kicker">Digital Store</span>
+                    <strong>Trade guides &amp; playbooks available</strong>
+                    <p>Browse practical export guides in the Digital Store tab. Purchase once, download anytime.</p>
                 </div>
             </section>
 
@@ -497,56 +500,6 @@ function CrmView({ revealedContacts }) {
     );
 }
 
-function AirlinesView() {
-    const [type, setType] = useState('international');
-    const [query, setQuery] = useState('');
-    const [results, setResults] = useState([]);
-
-    const suggestions = type === 'international' 
-        ? ['Emirates SkyCargo', 'Lufthansa Cargo', 'Qatar Airways', 'Cargolux']
-        : ['IndiGo CarGo', 'Air India Cargo', 'SpiceXpress', 'Blue Dart'];
-
-    const filtered = suggestions.filter(s => s.toLowerCase().includes(query.toLowerCase()));
-
-    return (
-        <div className="airlines-view">
-            <div className="welcome-banner">
-                <h2>Carrier Intelligence</h2>
-                <p>Lookup domestic and international cargo carriers for your trade routes.</p>
-            </div>
-            
-            <div className="apollo-sidebar-rail" style={{ width: '100%', maxWidth: 'none', flexDirection: 'row', gap: '2rem', height: 'auto', padding: '1.5rem', marginBottom: '2rem' }}>
-                <div style={{ flex: 1 }}>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', color: '#94a3b8' }}>Flight Scope</label>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button className={`btn-toggle ${type === 'domestic' ? 'active' : ''}`} onClick={() => setType('domestic')}>Domestic</button>
-                        <button className={`btn-toggle ${type === 'international' ? 'active' : ''}`} onClick={() => setType('international')}>International</button>
-                    </div>
-                </div>
-                <div style={{ flex: 2 }}>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', color: '#94a3b8' }}>Search carrier or route...</label>
-                    <input 
-                        className="apollo-search-input"
-                        value={query}
-                        onChange={e => setQuery(e.target.value)}
-                        placeholder={type === 'international' ? "Search Emirates, Qatar..." : "Search IndiGo, Blue Dart..."}
-                    />
-                </div>
-            </div>
-
-            <div className="discovery-grid">
-                {filtered.map(name => (
-                    <div key={name} className="company-card">
-                        <div className="card-top"><h4>{name}</h4><Truck size={18} color="#3b82f6" /></div>
-                        <p className="company-text">Authorized Cargo Handler</p>
-                        <p className="text-sm text-muted">Active routes: {type === 'international' ? 'Global' : 'PAN India'}</p>
-                        <button className="btn-reveal" style={{ marginTop: '1rem' }} onClick={() => alert(`${name} flight schedule lookup...`)}>View Schedules</button>
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
-}
 
 
 function GlobalSearchView({ userData, user, refreshUserData, state, setState }) {
@@ -777,52 +730,6 @@ function GlobalSearchView({ userData, user, refreshUserData, state, setState }) 
                     </div>
                 </div>
             )}
-        </div>
-    );
-}
-
-function AIView({ userData }) {
-    const [msgs, setMsgs] = useState([]);
-    const [input, setInput] = useState('');
-    const [loading, setLoading] = useState(false);
-    const scrollRef = useRef();
-
-    useEffect(() => {
-        // Mock effect for message scrolling
-        if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }, [msgs]);
-
-    const sendMsg = async () => {
-        if (!input.trim()) return;
-        const text = input;
-        setInput('');
-        setLoading(true);
-        try {
-            // Mock AI response for now since backend endpoint is pending
-            setMsgs(prev => [...prev, { role: 'user', text }, { role: 'assistant', text: `I am EximHub AI. I am currently being optimized for global trade analysis. You asked: "${text}"` }]);
-        } catch (e) {
-            console.error(e);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    return (
-        <div className="ai-container">
-            <div className="chat-box" ref={scrollRef}>
-                {msgs.length === 0 && <p className="text-muted" style={{textAlign: 'center', marginTop: '2rem'}}>Ask EximHub AI about buyers, HS codes, sourcing strategy, or new market ideas.</p>}
-                {msgs.map((m, i) => (
-                    <div key={i} className={`chat-bubble ${m.role}`}>
-                        <div className="bubble-icon">{m.role === 'assistant' ? <Bot size={16}/> : <User size={16}/>}</div>
-                        <div className="bubble-text">{m.text}</div>
-                    </div>
-                ))}
-                {loading && <div className="chat-bubble assistant"><div className="bubble-text">Typing...</div></div>}
-            </div>
-            <div className="chat-input-area">
-                <input value={input} onChange={e => setInput(e.target.value)} onKeyPress={e => e.key === 'Enter' && sendMsg()} placeholder="Example: Who imports dairy products in the Philippines?" />
-                <button onClick={sendMsg} disabled={loading}><Send size={18}/></button>
-            </div>
         </div>
     );
 }

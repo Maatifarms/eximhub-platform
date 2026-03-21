@@ -142,18 +142,20 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="live-marquee" aria-label="Live market activity">
+      <section className="live-marquee" aria-label="Platform activity">
         <div className="marquee-track">
-          <span>Live buyers detected in Europe</span>
-          <span>Procurement intent rising in packaging</span>
-          <span>New sourcing clusters mapped across 195 countries</span>
-          <span>Export operators revealing verified contacts in real time</span>
-          <span>Trade Academy assets connected to the sales workflow</span>
-          <span>Live buyers detected in Europe</span>
-          <span>Procurement intent rising in packaging</span>
-          <span>New sourcing clusters mapped across 195 countries</span>
-          <span>Export operators revealing verified contacts in real time</span>
-          <span>Trade Academy assets connected to the sales workflow</span>
+          <span>Verified procurement contacts across 195 countries</span>
+          <span>HS code intelligence for faster market targeting</span>
+          <span>Shipment-level data to track buyers and suppliers</span>
+          <span>Decision-maker contacts in packaging, agri, textiles, and more</span>
+          <span>Search by country, industry, or product keyword</span>
+          <span>Trade Directory — browse companies without spending credits</span>
+          <span>Pipeline CRM to manage and follow up with revealed contacts</span>
+          <span>Market intelligence across global trade routes</span>
+          <span>Verified procurement contacts across 195 countries</span>
+          <span>HS code intelligence for faster market targeting</span>
+          <span>Shipment-level data to track buyers and suppliers</span>
+          <span>Decision-maker contacts in packaging, agri, textiles, and more</span>
         </div>
       </section>
 
@@ -170,7 +172,7 @@ export default function LandingPage() {
         </div>
         <div className="signal-card">
           <span className="signal-kicker">Trade Stack</span>
-          <strong>Search, AI, and sourcing in one place</strong>
+          <strong>Search, insights, and sourcing in one place</strong>
           <p>No more scattered tools and spreadsheets.</p>
         </div>
       </section>
@@ -235,47 +237,30 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="features bg-dark-soft">
-        <div className="section-header">
-          <h2>EximHub AI Trade Assistant</h2>
-          <p>Get faster answers on HS codes, buyer targeting, and market entry.</p>
-        </div>
-        <div className="service-row">
-          <div className="service-info">
-            <h3>Ask practical trade questions.</h3>
-            <p>Get concise next steps you can actually use.</p>
-            <Link to="/contact" className="btn-secondary">Request Access</Link>
-          </div>
-          <div className="service-visual">
-            <div className="glass-card">
-              <Cpu size={80} className="floating-icon text-blue-500" />
-            </div>
-          </div>
-        </div>
-      </section>
-
       <section id="pricing" className="features">
         <div className="section-header">
-          <h2>Scalable Pricing Programs</h2>
-          <p>Choose the access level that fits your growth stage.</p>
+          <h2>Simple, Transparent Pricing</h2>
+          <p>One-time access plans with no hidden fees. Pay once, find buyers in 195 countries.</p>
         </div>
         <div className="pricing-grid">
           <div className="pricing-card">
-            <h3>Program 1</h3>
+            <h3>Market Explorer</h3>
             <div className="price">Rs 25,000</div>
-            <p>For exporters validating new markets</p>
-            <Link to="/contact" className="btn-primary" style={{ marginTop: '1.5rem' }}>Request Access</Link>
+            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '0.25rem 0 0.5rem' }}>~ $300 USD &middot; Annual</p>
+            <p>500 credits &mdash; for exporters entering new markets</p>
+            <Link to="/pricing" className="btn-primary" style={{ marginTop: '1.5rem' }}>View Plan</Link>
           </div>
           <div className="pricing-card highlighted">
-            <h3>Program 2</h3>
+            <h3>Trade Accelerator</h3>
             <div className="price">Rs 45,000</div>
-            <p>For teams actively scaling outreach</p>
-            <Link to="/contact" className="btn-primary" style={{ marginTop: '1.5rem' }}>Request Access</Link>
+            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '0.25rem 0 0.5rem' }}>~ $540 USD &middot; Semi-Annual</p>
+            <p>1,200 credits &mdash; for teams scaling outreach globally</p>
+            <Link to="/pricing" className="btn-primary" style={{ marginTop: '1.5rem' }}>View Plan</Link>
           </div>
           <div className="pricing-card">
             <h3>Enterprise</h3>
             <div className="price">Custom</div>
-            <p>For larger teams needing custom workflows</p>
+            <p>Unlimited credits, dedicated consultant, custom workflows</p>
             <Link to="/contact" className="btn-primary" style={{ marginTop: '1.5rem' }}>Contact Sales</Link>
           </div>
         </div>
